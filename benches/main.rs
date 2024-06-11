@@ -1,11 +1,14 @@
 use std::hint::black_box;
 
 use criterion::Criterion;
+use noheap_collections::{Cursor, Push};
+use typenum::{U100, U1000000};
 
 fn bench(c: &mut Criterion) {
+    let mut cur = Cursor::<u8, U1000000>::new();
     c.bench_function("spares vec", |b| {
         b.iter(|| {
-            black_box(1 + 1);
+            unsafe { cur.push_unchecked(0) };
         });
     });
 }
