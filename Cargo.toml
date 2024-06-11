@@ -1,7 +1,15 @@
 [package]
-name = "noheap-collections"
+name = "fast_collections"
 version = "0.1.0"
 edition = "2021"
+author = "Bruce0203 <brucefreedy@gmail.com>"
+description = "noheap zero copy collections"
+repository = "https://github.com/Bruce0203/fast_collections"
+license = "MIT"
+include = [
+    "**/*.rs",
+    "Cargo.toml",
+]
 
 [dependencies]
 generic-array = "1.0.0"

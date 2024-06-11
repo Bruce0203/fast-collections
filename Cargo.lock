@@ -173,6 +173,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3dca9240753cf90908d7e4aac30f630662b02aebaa1b58a3cadabdb23385b58b"
 
 [[package]]
+name = "fast_collections"
+version = "0.1.0"
+dependencies = [
+ "criterion",
+ "generic-array",
+ "typenum",
+]
+
+[[package]]
 name = "generic-array"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -249,15 +258,6 @@ name = "memchr"
 version = "2.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6c8640c5d730cb13ebd907d8d04b52f55ac9a2eec55b440c8892f40d56c76c1d"
-
-[[package]]
-name = "noheap-collections"
-version = "0.1.0"
-dependencies = [
- "criterion",
- "generic-array",
- "typenum",
-]
 
 [[package]]
 name = "num-traits"
