@@ -10,6 +10,10 @@ pub use string::*;
 pub use traits::*;
 pub use vec::*;
 
+pub mod typenum {
+    pub use typenum::*;
+}
+
 /// A const reimplementation of the [`transmute`](core::mem::transmute) function, avoiding copying
 #[inline(always)]
 #[doc(hidden)]

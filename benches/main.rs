@@ -1,8 +1,8 @@
 use std::hint::black_box;
 
 use criterion::Criterion;
-use noheap_collections::{Cursor, Push};
-use typenum::{U100, U1000000};
+use fast_collections::{Cursor, Push};
+use typenum::U1000000;
 
 fn bench(c: &mut Criterion) {
     let mut cur = Cursor::<u8, U1000000>::new();
