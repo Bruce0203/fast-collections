@@ -1,6 +1,7 @@
 use std::mem::MaybeUninit;
 
-use generic_array::{ArrayLength, GenericArray};
+use generic_array::{ArrayLength, GenericArray, IntoArrayLength};
+use typenum::Const;
 
 use crate::Vec;
 
@@ -13,7 +14,10 @@ impl<N: ArrayLength> String<N> {
         Self { vec: Vec::uninit() }
     }
 
-    pub const fn from_array(array: [u8; N::USIZE]) -> Self {
+    pub const fn from_array<const L: usize>(array: [u8; L]) -> Self
+    where
+        Const<L>: IntoArrayLength<ArrayLength = N>,
+    {
         Self {
             vec: Vec::from_array(array),
         }

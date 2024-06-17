@@ -1,6 +1,7 @@
 use core::mem::MaybeUninit;
 
-use generic_array::{ArrayLength, GenericArray};
+use generic_array::{ArrayLength, GenericArray, IntoArrayLength};
+use typenum::Const;
 
 use crate::{const_transmute_unchecked, Cap, Get, GetUnchecked, Index, Pop, Push};
 
@@ -20,7 +21,10 @@ where
         }
     }
 
-    pub const fn from_array(array: [T; N::USIZE]) -> Self {
+    pub const fn from_array<const L: usize>(array: [T; L]) -> Self
+    where
+        Const<L>: IntoArrayLength<ArrayLength = N>,
+    {
         Self {
             data: unsafe { const_transmute_unchecked(array) },
             len: 0,
