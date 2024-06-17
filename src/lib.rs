@@ -1,4 +1,5 @@
 #![feature(const_mut_refs)]
+#![feature(generic_const_exprs)]
 
 pub mod cursor;
 pub mod slab;

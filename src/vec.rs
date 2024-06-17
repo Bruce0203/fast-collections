@@ -2,7 +2,7 @@ use core::mem::MaybeUninit;
 
 use generic_array::{ArrayLength, GenericArray};
 
-use crate::{Cap, Get, GetUnchecked, Index, Pop, Push};
+use crate::{const_transmute_unchecked, Cap, Get, GetUnchecked, Index, Pop, Push};
 
 pub struct Vec<T, N: ArrayLength> {
     data: GenericArray<MaybeUninit<T>, N>,
@@ -20,9 +20,9 @@ where
         }
     }
 
-    pub const fn from_array(array: GenericArray<MaybeUninit<T>, N>) -> Self {
+    pub const fn from_array(array: [T; N::USIZE]) -> Self {
         Self {
-            data: array,
+            data: unsafe { const_transmute_unchecked(array) },
             len: 0,
         }
     }
