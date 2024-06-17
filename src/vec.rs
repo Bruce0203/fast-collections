@@ -20,8 +20,19 @@ where
         }
     }
 
+    pub const fn from_array(array: GenericArray<MaybeUninit<T>, N>) -> Self {
+        Self {
+            data: array,
+            len: 0,
+        }
+    }
+
     pub const fn len(&self) -> usize {
         self.len
+    }
+
+    pub const unsafe fn len_mut(&mut self) -> &mut usize {
+        &mut self.len
     }
 }
 
@@ -58,9 +69,10 @@ where
         }
     }
 
+    #[inline(always)]
     unsafe fn push_unchecked(&mut self, value: T) {
         *self.data.get_unchecked_mut(self.len) = MaybeUninit::new(value);
-        self.len += 1;
+        self.len = self.len.unchecked_add(1);
     }
 }
 
@@ -68,10 +80,11 @@ impl<T, N> GetUnchecked<T> for Vec<T, N>
 where
     N: ArrayLength,
 {
-    unsafe fn get_unchecked(&self, index: usize) -> &T {
+    unsafe fn get_unchecked_ref(&self, index: usize) -> &T {
         self.data.get_unchecked(index).assume_init_ref()
     }
 
+    #[inline(always)]
     unsafe fn get_unchecked_mut(&mut self, index: usize) -> &mut T {
         self.data.get_unchecked_mut(index).assume_init_mut()
     }
@@ -83,7 +96,7 @@ where
 {
     fn get(&self, index: usize) -> Option<&T> {
         if N::USIZE > index {
-            Some(unsafe { self.get_unchecked(index) })
+            Some(unsafe { self.get_unchecked_ref(index) })
         } else {
             None
         }

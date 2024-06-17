@@ -1,3 +1,5 @@
+#![feature(const_mut_refs)]
+
 pub mod cursor;
 pub mod slab;
 pub mod string;
@@ -12,6 +14,10 @@ pub use vec::*;
 
 pub mod typenum {
     pub use typenum::*;
+}
+
+pub mod generic_array {
+    pub use generic_array::*;
 }
 
 /// A const reimplementation of the [`transmute`](core::mem::transmute) function, avoiding copying

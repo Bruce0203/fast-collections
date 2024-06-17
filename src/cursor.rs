@@ -25,13 +25,8 @@ where
 
     #[inline(always)]
     unsafe fn push_unchecked(&mut self, item: T) {
-        *unsafe {
-            self.buffer.get_unchecked_mut({
-                let filled = self.filled_len.clone();
-                self.filled_len = self.filled_len.unchecked_add(1);
-                filled
-            })
-        } = MaybeUninit::new(item);
+        *unsafe { self.buffer.get_unchecked_mut(self.filled_len) } = MaybeUninit::new(item);
+        self.filled_len = self.filled_len.unchecked_add(1);
     }
 }
 
@@ -141,12 +136,12 @@ where
         }
     }
 
+    #[inline(always)]
     unsafe fn read_transmute_unchecked<T>(&mut self) -> &T {
-        &*(self as *const Self as *const T).byte_offset({
-            let pos = self.pos().clone();
-            *self.pos_mut() += core::mem::size_of::<T>();
-            pos as isize
-        } as isize)
+        let value = self as *const Self as *const u8;
+        let result = &*value.offset(self.pos as isize).cast::<T>();
+        *self.pos_mut() = self.pos.unchecked_add(core::mem::size_of::<T>());
+        result
     }
 }
 

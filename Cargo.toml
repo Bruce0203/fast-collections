@@ -1,6 +1,6 @@
 [package]
 name = "fast_collections"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 author = "Bruce0203 <brucefreedy@gmail.com>"
 description = "noheap zero copy collections"
@@ -21,9 +21,3 @@ criterion = "0.5.1"
 [[bench]]
 name = "main"
 harness = false
-
-[profile.bench]
-lto = 'fat'
-
-[profile.release]
-lto = 'fat'

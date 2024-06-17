@@ -16,7 +16,7 @@ pub trait Get<T>: Index {
 }
 
 pub trait GetUnchecked<T>: Index {
-    unsafe fn get_unchecked(&self, index: Self::Index) -> &T;
+    unsafe fn get_unchecked_ref(&self, index: Self::Index) -> &T;
     unsafe fn get_unchecked_mut(&mut self, index: Self::Index) -> &mut T;
 }
 
