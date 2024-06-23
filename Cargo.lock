@@ -180,7 +180,7 @@ checksum = "3dca9240753cf90908d7e4aac30f630662b02aebaa1b58a3cadabdb23385b58b"
 
 [[package]]
 name = "fast_collections"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "criterion",
  "generic-array",
