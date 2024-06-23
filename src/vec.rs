@@ -5,6 +5,7 @@ use typenum::Const;
 
 use crate::{const_transmute_unchecked, Cap, Get, GetUnchecked, Index, Pop, Push};
 
+#[derive(Debug)]
 pub struct Vec<T, N: ArrayLength> {
     data: GenericArray<MaybeUninit<T>, N>,
     len: usize,

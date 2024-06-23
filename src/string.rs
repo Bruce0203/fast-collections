@@ -1,10 +1,9 @@
-use std::mem::MaybeUninit;
-
-use generic_array::{ArrayLength, GenericArray, IntoArrayLength};
+use generic_array::{ArrayLength, IntoArrayLength};
 use typenum::Const;
 
 use crate::Vec;
 
+#[derive(Debug)]
 pub struct String<N: ArrayLength> {
     vec: Vec<u8, N>,
 }
