@@ -39,12 +39,12 @@ pub trait Cap {
     fn capacity(&self) -> Self::Cap;
 }
 
-pub trait Read<T> {
+pub trait CursorRead<T> {
     fn read(&mut self) -> Option<&T>;
     unsafe fn read_unchecked(&mut self) -> &T;
 }
 
-pub trait ReadTransmute {
+pub trait CursorReadTransmute {
     fn read_transmute<T>(&mut self) -> Option<&T>;
     unsafe fn read_transmute_unchecked<T>(&mut self) -> &T;
 }

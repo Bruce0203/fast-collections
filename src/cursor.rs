@@ -1,7 +1,7 @@
 use core::{mem::MaybeUninit, slice::from_raw_parts};
 use generic_array::{ArrayLength, GenericArray};
 
-use crate::{Cap, Push, Read, ReadTransmute};
+use crate::{Cap, Push, CursorCursorReadTransmutensmute};
 
 #[repr(C)]
 pub struct Cursor<T, N: ArrayLength> {
@@ -102,7 +102,7 @@ where
     }
 }
 
-impl<T, N> Read<T> for Cursor<T, N>
+impl<T, N> CursorRead<T> for Cursor<T, N>
 where
     N: ArrayLength,
 {
@@ -124,7 +124,7 @@ where
     }
 }
 
-impl<N> ReadTransmute for Cursor<u8, N>
+impl<N> CursorReadTransmute for Cursor<u8, N>
 where
     N: ArrayLength,
 {
@@ -147,7 +147,7 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::{Push, Read, ReadTransmute};
+    use crate::{Push, CursorCursorReadTransmutensmute};
 
     use super::Cursor;
     use generic_array::typenum::{U100, U8};

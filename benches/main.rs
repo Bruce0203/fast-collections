@@ -1,7 +1,7 @@
 use std::hint::black_box;
 
 use criterion::Criterion;
-use fast_collections::{Cursor, ReadTransmute};
+use fast_collections::{Cursor, CursorReadTransmute};
 use typenum::U1000000;
 
 fn bench(c: &mut Criterion) {
