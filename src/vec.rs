@@ -39,6 +39,10 @@ where
     pub const unsafe fn len_mut(&mut self) -> &mut usize {
         &mut self.len
     }
+
+    pub const fn as_slice(&self) -> &[T] {
+        unsafe { const_transmute_unchecked(self.data.as_slice()) }
+    }
 }
 
 impl<T, N> Index for Vec<T, N>

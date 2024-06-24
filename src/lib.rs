@@ -1,3 +1,4 @@
+#![feature(const_refs_to_cell)]
 #![feature(const_mut_refs)]
 #![feature(generic_const_exprs)]
 
