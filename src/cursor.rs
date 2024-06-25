@@ -66,7 +66,7 @@ where
     }
 
     #[inline(always)]
-    pub const fn filled_len(&self) -> usize {
+    pub fn filled_len(&self) -> usize {
         self.filled_len
     }
 
@@ -76,8 +76,8 @@ where
     }
 
     #[inline(always)]
-    pub unsafe fn filled(&self) -> &[T] {
-        from_raw_parts(self.buffer.as_ptr() as *const T, self.filled_len)
+    pub fn filled(&self) -> &[T] {
+        unsafe { from_raw_parts(self.buffer.as_ptr() as *const T, self.filled_len) }
     }
 
     #[inline(always)]
@@ -86,11 +86,13 @@ where
     }
 
     #[inline(always)]
-    pub unsafe fn unfilled(&self) -> &[T] {
-        from_raw_parts(
-            (self.buffer.as_ptr() as *const T).offset(self.filled_len as isize),
-            N::USIZE - self.filled_len,
-        )
+    pub fn unfilled(&self) -> &[T] {
+        unsafe {
+            from_raw_parts(
+                (self.buffer.as_ptr() as *const T).offset(self.filled_len as isize),
+                N::USIZE - self.filled_len,
+            )
+        }
     }
 
     #[inline(always)]
@@ -147,7 +149,7 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::{CursorCursorReadTransmutensmute, Push};
+    use crate::{CursorRead, CursorReadTransmute, Push};
 
     use super::Cursor;
     use generic_array::typenum::{U100, U8};
