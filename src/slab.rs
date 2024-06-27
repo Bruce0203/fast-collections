@@ -1,6 +1,6 @@
 use generic_array::ArrayLength;
 
-use crate::{GetUnchecked, Index, Pop, Push, RemoveUnchecked, Vec};
+use crate::{Clear, GetUnchecked, Index, Pop, Push, RemoveUnchecked, Vec};
 
 ///Simply store element fast without any other features like get length, and iteration.
 pub struct Slab<T, N: ArrayLength> {
@@ -23,6 +23,13 @@ where
 
     unsafe fn get_unchecked_ref(&self, index: Self::Index) -> &T {
         self.chunk.get_unchecked_ref(index)
+    }
+}
+
+impl<T, N> Clear for Slab<T, N> where N: ArrayLength{
+    fn clear(&mut self) {
+        self.chunk.clear();
+        self.spares.clear();
     }
 }
 

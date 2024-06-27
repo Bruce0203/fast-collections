@@ -48,3 +48,7 @@ pub trait CursorReadTransmute {
     fn read_transmute<T>(&mut self) -> Option<&T>;
     unsafe fn read_transmute_unchecked<T>(&mut self) -> &T;
 }
+
+pub trait Clear {
+    fn clear(&mut self);
+}

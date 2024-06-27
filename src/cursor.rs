@@ -1,7 +1,7 @@
 use core::{mem::MaybeUninit, slice::from_raw_parts};
 use generic_array::{ArrayLength, GenericArray};
 
-use crate::{Cap, CursorRead, CursorReadTransmute, Push};
+use crate::{Cap, Clear, CursorRead, CursorReadTransmute, Push};
 
 #[repr(C)]
 pub struct Cursor<T, N: ArrayLength> {
@@ -27,6 +27,16 @@ where
     unsafe fn push_unchecked(&mut self, item: T) {
         *unsafe { self.buffer.get_unchecked_mut(self.filled_len) } = MaybeUninit::new(item);
         self.filled_len = self.filled_len.unchecked_add(1);
+    }
+}
+
+impl<T, N> Clear for Cursor<T, N>
+where
+    N: ArrayLength,
+{
+    fn clear(&mut self) {
+        self.filled_len = 0;
+        self.pos = 0;
     }
 }
 

@@ -3,7 +3,7 @@ use core::mem::MaybeUninit;
 use generic_array::{ArrayLength, GenericArray, IntoArrayLength};
 use typenum::Const;
 
-use crate::{const_transmute_unchecked, Cap, Get, GetUnchecked, Index, Pop, Push};
+use crate::{const_transmute_unchecked, Cap, Clear, Get, GetUnchecked, Index, Pop, Push};
 
 #[derive(Debug)]
 pub struct Vec<T, N: ArrayLength> {
@@ -42,6 +42,15 @@ where
 
     pub const fn as_slice(&self) -> &[T] {
         unsafe { const_transmute_unchecked(self.data.as_slice()) }
+    }
+}
+
+impl<T, N> Clear for Vec<T, N>
+where
+    N: ArrayLength,
+{
+    fn clear(&mut self) {
+        self.len = 0;
     }
 }
 
