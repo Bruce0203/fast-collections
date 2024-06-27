@@ -1,7 +1,6 @@
+use crate::{Cap, Clear, CursorRead, CursorReadTransmute, Get, GetUnchecked, Index, Push};
 use core::{mem::MaybeUninit, slice::from_raw_parts};
 use generic_array::{ArrayLength, GenericArray};
-
-use crate::{Cap, Clear, CursorRead, CursorReadTransmute, Push};
 
 #[repr(C)]
 pub struct Cursor<T, N: ArrayLength> {
@@ -154,6 +153,26 @@ where
         let result = &*value.offset(self.pos as isize).cast::<T>();
         *self.pos_mut() = self.pos.unchecked_add(core::mem::size_of::<T>());
         result
+    }
+}
+
+impl<T, N> Index for Cursor<T, N>
+where
+    N: ArrayLength,
+{
+    type Index = usize;
+}
+
+impl<T, N> GetUnchecked<T> for Cursor<T, N>
+where
+    N: ArrayLength,
+{
+    unsafe fn get_unchecked_ref(&self, index: Self::Index) -> &T {
+        self.buffer.get_unchecked(index).assume_init_ref()
+    }
+
+    unsafe fn get_unchecked_mut(&mut self, index: Self::Index) -> &mut T {
+        self.buffer.get_unchecked_mut(index).assume_init_mut()
     }
 }
 
