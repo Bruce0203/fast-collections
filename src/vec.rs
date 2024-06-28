@@ -11,6 +11,18 @@ pub struct Vec<T, N: ArrayLength> {
     len: usize,
 }
 
+impl<T, N> Default for Vec<T, N>
+where
+    N: ArrayLength,
+{
+    fn default() -> Self {
+        Self {
+            data: GenericArray::uninit(),
+            len: Default::default(),
+        }
+    }
+}
+
 impl<T, N> Vec<T, N>
 where
     N: ArrayLength,

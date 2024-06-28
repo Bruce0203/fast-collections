@@ -8,6 +8,18 @@ pub struct Slab<T, N: ArrayLength> {
     spares: Vec<usize, N>,
 }
 
+impl<T, N> Default for Slab<T, N>
+where
+    N: ArrayLength,
+{
+    fn default() -> Self {
+        Self {
+            chunk: Default::default(),
+            spares: Default::default(),
+        }
+    }
+}
+
 impl<T, N: ArrayLength> Index for Slab<T, N> {
     type Index = usize;
 }
@@ -26,7 +38,10 @@ where
     }
 }
 
-impl<T, N> Clear for Slab<T, N> where N: ArrayLength{
+impl<T, N> Clear for Slab<T, N>
+where
+    N: ArrayLength,
+{
     fn clear(&mut self) {
         self.chunk.clear();
         self.spares.clear();

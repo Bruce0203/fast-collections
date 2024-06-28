@@ -9,6 +9,19 @@ pub struct Cursor<T, N: ArrayLength> {
     filled_len: usize,
 }
 
+impl<T, N> Default for Cursor<T, N>
+where
+    N: ArrayLength,
+{
+    fn default() -> Self {
+        Self {
+            buffer: GenericArray::uninit(),
+            pos: Default::default(),
+            filled_len: Default::default(),
+        }
+    }
+}
+
 impl<T, N> Push<T> for Cursor<T, N>
 where
     N: ArrayLength,
