@@ -11,6 +11,14 @@ fn bench(c: &mut Criterion) {
     let mut group = c.benchmark_group("pointer");
     group.throughput(Throughput::Bytes(1000));
     {
+        group.bench_function("get with relative pointer", |b| {
+            b.iter(|| {
+                let value = unsafe { slab.get_unchecked_mut(value) };
+                black_box(value.0);
+            });
+        });
+    }
+    {
         let value = unsafe { slab.get_unchecked_mut(value) };
         group.bench_function("get with static pointer", |b| {
             b.iter(|| {
@@ -18,12 +26,6 @@ fn bench(c: &mut Criterion) {
             });
         });
     }
-    group.bench_function("get with relative pointer", |b| {
-        b.iter(|| {
-            let value = unsafe { slab.get_unchecked_mut(value) };
-            black_box(value.0);
-        });
-    });
 }
 
 pub struct MyStruct(usize);
