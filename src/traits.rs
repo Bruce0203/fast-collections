@@ -67,6 +67,6 @@ pub trait PushTransmute {
     fn push_transmute<V>(&mut self, value: V) -> Result<(), ()>;
 }
 
-pub trait PushTransmuteUnchecked {
-    unsafe fn push_transmute_unchecked<V>(&mut self, value: V);
+pub trait PushTransmuteUnchecked<V> {
+    unsafe fn push_transmute_unchecked(&mut self, value: V);
 }

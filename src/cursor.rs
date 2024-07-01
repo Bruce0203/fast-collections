@@ -210,14 +210,35 @@ where
     }
 }
 
-impl<T, N> PushTransmuteUnchecked for Cursor<T, N>
+const fn assert_types<T, V>() {
+    assert!(core::mem::size_of::<V>() >= core::mem::size_of::<T>())
+}
+
+const fn calc_index_from_input_size_and_unit_isze<T, V>() -> usize {
+    let input_size = core::mem::size_of::<V>();
+    let unit_size = core::mem::size_of::<T>();
+    if input_size % unit_size != 0 {
+        input_size / unit_size + 1
+    } else {
+        input_size / unit_size
+    }
+}
+
+impl<T, V, N> PushTransmuteUnchecked<V> for Cursor<T, N>
 where
+    T: Sized,
     N: ArrayLength,
+    [V; 1]:,
+    [T; 1]:,
 {
-    unsafe fn push_transmute_unchecked<V>(&mut self, value: V) {
+    unsafe fn push_transmute_unchecked(&mut self, value: V) {
+        let _ = const { assert_types::<T, V>() };
+
         let ptr = self as *mut Self as *mut u8;
-        *ptr.offset(self.pos as isize).cast::<V>() = value;
-        *self.pos_mut() = self.pos.unchecked_add(core::mem::size_of::<V>());
+        *ptr.offset(self.filled_len as isize).cast::<V>() = value;
+        *self.filled_len_mut() = self
+            .filled_len
+            .unchecked_add(const { calc_index_from_input_size_and_unit_isze::<T, V>() });
     }
 }
 
