@@ -1,6 +1,6 @@
 use crate::{
     Cap, Clear, CursorRead, CursorReadTransmute, GetTransmute, GetTransmuteUnchecked, GetUnchecked,
-    Index, Push, PushTransmute, PushTransmuteUnchecked,
+    Index, Push, PushTransmute, PushTransmuteUnchecked, SetTransmute,
 };
 use core::{
     mem::{size_of, MaybeUninit},
@@ -210,35 +210,14 @@ where
     }
 }
 
-const fn assert_types<T, V>() {
-    assert!(core::mem::size_of::<V>() >= core::mem::size_of::<T>())
-}
-
-const fn calc_index_from_input_size_and_unit_isze<T, V>() -> usize {
-    let input_size = core::mem::size_of::<V>();
-    let unit_size = core::mem::size_of::<T>();
-    if input_size % unit_size != 0 {
-        input_size / unit_size + 1
-    } else {
-        input_size / unit_size
-    }
-}
-
 impl<T, V, N> PushTransmuteUnchecked<V> for Cursor<T, N>
 where
     T: Sized,
     N: ArrayLength,
-    [V; 1]:,
-    [T; 1]:,
 {
     unsafe fn push_transmute_unchecked(&mut self, value: V) {
-        let _ = const { assert_types::<T, V>() };
-
         let ptr = self as *mut Self as *mut u8;
         *ptr.offset(self.filled_len as isize).cast::<V>() = value;
-        *self.filled_len_mut() = self
-            .filled_len
-            .unchecked_add(const { calc_index_from_input_size_and_unit_isze::<T, V>() });
     }
 }
 
@@ -283,6 +262,24 @@ where
     #[inline(always)]
     unsafe fn get_unchecked_mut(&mut self, index: Self::Index) -> &mut T {
         self.buffer.get_unchecked_mut(index).assume_init_mut()
+    }
+}
+
+impl<T, N> SetTransmute<T> for Cursor<T, N>
+where
+    N: ArrayLength,
+{
+    fn set_transmute<const L: usize>(&mut self, index: usize, value: [T; L]) -> Result<(), ()> {
+        if index + value.len() < N::USIZE {
+            unsafe { Ok(self.set_transmute_unchecked(index, value)) }
+        } else {
+            Err(())
+        }
+    }
+
+    unsafe fn set_transmute_unchecked<const L: usize>(&mut self, index: usize, value: [T; L]) {
+        let ptr = self as *mut Self as *mut u8;
+        *ptr.offset(index as isize).cast::<[T; L]>() = value;
     }
 }
 

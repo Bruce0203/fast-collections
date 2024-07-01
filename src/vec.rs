@@ -1,7 +1,7 @@
 use core::mem::MaybeUninit;
 
 use generic_array::{ArrayLength, GenericArray, IntoArrayLength};
-use typenum::{Const, Integer};
+use typenum::Const;
 
 use crate::{const_transmute_unchecked, Cap, Clear, Get, GetUnchecked, Index, Pop, Push};
 
@@ -191,3 +191,4 @@ where
         self.data.get_unchecked_mut(new_len).assume_init_mut()
     }
 }
+

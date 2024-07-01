@@ -70,3 +70,8 @@ pub trait PushTransmute {
 pub trait PushTransmuteUnchecked<V> {
     unsafe fn push_transmute_unchecked(&mut self, value: V);
 }
+
+pub trait SetTransmute<T> {
+    fn set_transmute<const L: usize>(&mut self, index: usize, value: [T; L]) -> Result<(), ()>;
+    unsafe fn set_transmute_unchecked<const L: usize>(&mut self, index: usize, value: [T; L]);
+}
