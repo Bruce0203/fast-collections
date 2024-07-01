@@ -1,4 +1,7 @@
-use crate::{Cap, Clear, CursorRead, CursorReadTransmute, Get, GetUnchecked, Index, Push};
+use crate::{
+    Cap, Clear, CursorRead, CursorReadTransmute, Get, GetTransmute, GetTransmuteUnchecked,
+    GetUnchecked, Index, Push,
+};
 use core::{mem::MaybeUninit, slice::from_raw_parts};
 use generic_array::{ArrayLength, GenericArray};
 
@@ -13,6 +16,7 @@ impl<T, N> Default for Cursor<T, N>
 where
     N: ArrayLength,
 {
+    #[inline(always)]
     fn default() -> Self {
         Self {
             buffer: GenericArray::uninit(),
@@ -46,6 +50,7 @@ impl<T, N> Clear for Cursor<T, N>
 where
     N: ArrayLength,
 {
+    #[inline(always)]
     fn clear(&mut self) {
         self.filled_len = 0;
         self.pos = 0;
@@ -130,6 +135,7 @@ impl<T, N> CursorRead<T> for Cursor<T, N>
 where
     N: ArrayLength,
 {
+    #[inline(always)]
     fn read(&mut self) -> Option<&T> {
         let pos = self.pos().clone();
         if pos < self.filled_len {
@@ -148,10 +154,51 @@ where
     }
 }
 
+impl<T, N> GetTransmute for Cursor<T, N>
+where
+    N: ArrayLength,
+{
+    #[inline(always)]
+    fn get_transmute<V>(&self, index: Self::Index) -> Option<&V> {
+        if index < N::USIZE as Self::Index {
+            Some(unsafe { self.get_transmute_unchecked(index) })
+        } else {
+            None
+        }
+    }
+
+    #[inline(always)]
+    fn get_transmute_mut<V>(&mut self, index: Self::Index) -> Option<&mut V> {
+        if index < N::USIZE as Self::Index {
+            Some(unsafe { self.get_transmute_mut_unchecked(index) })
+        } else {
+            None
+        }
+    }
+}
+
+impl<T, N> GetTransmuteUnchecked for Cursor<T, N>
+where
+    N: ArrayLength,
+{
+    #[inline(always)]
+    unsafe fn get_transmute_unchecked<V>(&self, index: Self::Index) -> &V {
+        let value = self as *const Self as *const u8;
+        &*value.offset(index as isize).cast::<V>()
+    }
+
+    #[inline(always)]
+    unsafe fn get_transmute_mut_unchecked<V>(&mut self, index: Self::Index) -> &mut V {
+        let value = self as *mut Self as *mut u8;
+        &mut *value.offset(index as isize).cast::<V>()
+    }
+}
+
 impl<N> CursorReadTransmute for Cursor<u8, N>
 where
     N: ArrayLength,
 {
+    #[inline(always)]
     fn read_transmute<T>(&mut self) -> Option<&T> {
         if self.pos() + core::mem::size_of::<T>() > self.filled_len() {
             None
@@ -180,10 +227,12 @@ impl<T, N> GetUnchecked<T> for Cursor<T, N>
 where
     N: ArrayLength,
 {
+    #[inline(always)]
     unsafe fn get_unchecked_ref(&self, index: Self::Index) -> &T {
         self.buffer.get_unchecked(index).assume_init_ref()
     }
 
+    #[inline(always)]
     unsafe fn get_unchecked_mut(&mut self, index: Self::Index) -> &mut T {
         self.buffer.get_unchecked_mut(index).assume_init_mut()
     }

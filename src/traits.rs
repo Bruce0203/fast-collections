@@ -52,3 +52,13 @@ pub trait CursorReadTransmute {
 pub trait Clear {
     fn clear(&mut self);
 }
+
+pub trait GetTransmute: Index {
+    fn get_transmute<V>(&self, index: Self::Index) -> Option<&V>;
+    fn get_transmute_mut<V>(&mut self, index: Self::Index) -> Option<&mut V>;
+}
+
+pub trait GetTransmuteUnchecked: Index {
+    unsafe fn get_transmute_unchecked<V>(&self, index: Self::Index) -> &V;
+    unsafe fn get_transmute_mut_unchecked<V>(&mut self, index: Self::Index) -> &mut V;
+}
