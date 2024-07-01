@@ -217,6 +217,7 @@ where
     unsafe fn push_transmute_unchecked<V>(&mut self, value: V) {
         let ptr = self as *mut Self as *mut u8;
         *ptr.offset(self.pos as isize).cast::<V>() = value;
+        *self.pos_mut() = self.pos.unchecked_add(core::mem::size_of::<V>());
     }
 }
 
