@@ -62,3 +62,11 @@ pub trait GetTransmuteUnchecked: Index {
     unsafe fn get_transmute_unchecked<V>(&self, index: Self::Index) -> &V;
     unsafe fn get_transmute_mut_unchecked<V>(&mut self, index: Self::Index) -> &mut V;
 }
+
+pub trait PushTransmute {
+    fn push_transmute<V>(&mut self, value: V) -> Result<(), ()>;
+}
+
+pub trait PushTransmuteUnchecked {
+    unsafe fn push_transmute_unchecked<V>(&mut self, value: V);
+}

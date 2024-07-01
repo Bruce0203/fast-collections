@@ -1,8 +1,11 @@
 use crate::{
-    Cap, Clear, CursorRead, CursorReadTransmute, Get, GetTransmute, GetTransmuteUnchecked,
-    GetUnchecked, Index, Push,
+    Cap, Clear, CursorRead, CursorReadTransmute, GetTransmute, GetTransmuteUnchecked, GetUnchecked,
+    Index, Push, PushTransmute, PushTransmuteUnchecked,
 };
-use core::{mem::MaybeUninit, slice::from_raw_parts};
+use core::{
+    mem::{size_of, MaybeUninit},
+    slice::from_raw_parts,
+};
 use generic_array::{ArrayLength, GenericArray};
 
 #[repr(C)]
@@ -191,6 +194,29 @@ where
     unsafe fn get_transmute_mut_unchecked<V>(&mut self, index: Self::Index) -> &mut V {
         let value = self as *mut Self as *mut u8;
         &mut *value.offset(index as isize).cast::<V>()
+    }
+}
+
+impl<T, N> PushTransmute for Cursor<T, N>
+where
+    N: ArrayLength,
+{
+    fn push_transmute<V>(&mut self, value: V) -> Result<(), ()> {
+        if size_of::<V>() + self.pos < N::USIZE {
+            Ok(unsafe { self.push_transmute_unchecked(value) })
+        } else {
+            Err(())
+        }
+    }
+}
+
+impl<T, N> PushTransmuteUnchecked for Cursor<T, N>
+where
+    N: ArrayLength,
+{
+    unsafe fn push_transmute_unchecked<V>(&mut self, value: V) {
+        let ptr = self as *mut Self as *mut u8;
+        *ptr.offset(self.pos as isize).cast::<V>() = value;
     }
 }
 
