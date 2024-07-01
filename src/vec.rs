@@ -191,4 +191,3 @@ where
         self.data.get_unchecked_mut(new_len).assume_init_mut()
     }
 }
-

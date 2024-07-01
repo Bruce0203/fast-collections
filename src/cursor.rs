@@ -197,6 +197,20 @@ where
     }
 }
 
+const fn assert_types<T, V>() {
+    assert!(core::mem::size_of::<V>() >= core::mem::size_of::<T>())
+}
+
+const fn calc_index_from_input_size_and_unit_isze<T, V>() -> usize {
+    let input_size = core::mem::size_of::<V>();
+    let unit_size = core::mem::size_of::<T>();
+    if input_size % unit_size != 0 {
+        input_size / unit_size + 1
+    } else {
+        input_size / unit_size
+    }
+}
+
 impl<T, N> PushTransmute for Cursor<T, N>
 where
     N: ArrayLength,
@@ -216,8 +230,12 @@ where
     N: ArrayLength,
 {
     unsafe fn push_transmute_unchecked(&mut self, value: V) {
+        const { assert_types::<T, V>() };
         let ptr = self as *mut Self as *mut u8;
         *ptr.offset(self.filled_len as isize).cast::<V>() = value;
+        *self.filled_len_mut() = self
+            .filled_len
+            .unchecked_add(const { calc_index_from_input_size_and_unit_isze::<T, V>() });
     }
 }
 
@@ -265,21 +283,22 @@ where
     }
 }
 
-impl<T, N> SetTransmute<T> for Cursor<T, N>
+impl<T, N> SetTransmute for Cursor<T, N>
 where
     N: ArrayLength,
 {
-    fn set_transmute<const L: usize>(&mut self, index: usize, value: [T; L]) -> Result<(), ()> {
-        if index + value.len() < N::USIZE {
+    fn set_transmute<V>(&mut self, index: usize, value: V) -> Result<(), ()> {
+        if index + core::mem::size_of::<V>() < N::USIZE {
             unsafe { Ok(self.set_transmute_unchecked(index, value)) }
         } else {
             Err(())
         }
     }
 
-    unsafe fn set_transmute_unchecked<const L: usize>(&mut self, index: usize, value: [T; L]) {
+    unsafe fn set_transmute_unchecked<V>(&mut self, index: usize, value: V) {
+        const { assert_types::<T, V>() };
         let ptr = self as *mut Self as *mut u8;
-        *ptr.offset(index as isize).cast::<[T; L]>() = value;
+        *ptr.offset(index as isize).cast::<V>() = value;
     }
 }
 
