@@ -18,7 +18,7 @@ impl<N: ArrayLength> String<N> {
         Const<L>: IntoArrayLength<ArrayLength = N>,
     {
         Self {
-            vec: Vec::from_array(array),
+            vec: Vec::from_array_and_len(array, L),
         }
     }
 

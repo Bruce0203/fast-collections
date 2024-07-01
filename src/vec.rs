@@ -44,6 +44,16 @@ where
         }
     }
 
+    pub const fn from_array_and_len<const L: usize>(array: [T; L], len: usize) -> Self
+    where
+        Const<L>: IntoArrayLength<ArrayLength = N>,
+    {
+        Self {
+            data: unsafe { const_transmute_unchecked(array) },
+            len,
+        }
+    }
+
     pub const fn len(&self) -> usize {
         self.len
     }
