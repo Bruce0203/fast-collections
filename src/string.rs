@@ -21,4 +21,13 @@ impl<N: ArrayLength> String<N> {
             vec: Vec::from_array(array),
         }
     }
+
+    #[inline(always)]
+    pub const fn as_vec(&mut self) -> &mut Vec<u8, N> {
+        &mut self.vec
+    }
+
+    pub const fn len(&self) -> usize {
+        self.vec.len()
+    }
 }
