@@ -55,6 +55,14 @@ where
     pub const fn as_slice(&self) -> &[T] {
         unsafe { const_transmute_unchecked(self.data.as_slice()) }
     }
+
+    pub const fn as_array(&self) -> &[T; N::USIZE] {
+        unsafe { const_transmute_unchecked(&self.data) }
+    }
+
+    pub const fn as_array_mut(&mut self) -> &mut [T; N::USIZE] {
+        unsafe { const_transmute_unchecked(&mut self.data) }
+    }
 }
 
 impl<T, N> Clear for Vec<T, N>
