@@ -1,22 +1,16 @@
-use std::mem::MaybeUninit;
-
-use generic_array::{ArrayLength, GenericArray, IntoArrayLength};
+use generic_array::{ArrayLength, IntoArrayLength};
 use typenum::Const;
 
-use crate::{const_transmute_unchecked, Vec};
+use crate::Vec;
 
 #[derive(Debug)]
 pub struct String<N: ArrayLength> {
-    data: GenericArray<u8, N>,
+    vec: Vec<u8, N>,
 }
 
 impl<N: ArrayLength> String<N> {
     pub const fn new() -> Self {
-        Self {
-            data: unsafe {
-                const_transmute_unchecked(GenericArray::<MaybeUninit<u8>, N>::uninit())
-            },
-        }
+        Self { vec: Vec::uninit() }
     }
 
     pub const fn from_array<const L: usize>(array: [u8; L]) -> Self
@@ -24,7 +18,21 @@ impl<N: ArrayLength> String<N> {
         Const<L>: IntoArrayLength<ArrayLength = N>,
     {
         Self {
-            data: GenericArray::from_array(array),
+            vec: Vec::from_array_and_len(array, L),
         }
+    }
+
+    #[inline(always)]
+    pub const fn as_vec_mut(&mut self) -> &mut Vec<u8, N> {
+        &mut self.vec
+    }
+
+    #[inline(always)]
+    pub const fn as_vec(&self) -> &Vec<u8, N> {
+        &self.vec
+    }
+
+    pub const fn len(&self) -> usize {
+        self.vec.len()
     }
 }
