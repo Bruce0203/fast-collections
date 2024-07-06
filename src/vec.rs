@@ -1,6 +1,6 @@
 use core::mem::MaybeUninit;
 
-use generic_array::{ArrayLength, GenericArray, IntoArrayLength};
+use generic_array::{ArrayLength, GenericArray, GenericArrayIter, IntoArrayLength};
 use typenum::Const;
 
 use crate::{const_transmute_unchecked, Cap, Clear, Get, GetUnchecked, Index, Pop, Push};
@@ -9,6 +9,58 @@ use crate::{const_transmute_unchecked, Cap, Clear, Get, GetUnchecked, Index, Pop
 pub struct Vec<T, N: ArrayLength> {
     data: GenericArray<MaybeUninit<T>, N>,
     len: usize,
+}
+
+pub struct VecIterMut<'a, T, N>
+where
+    N: ArrayLength,
+{
+    vec: &'a mut Vec<T, N>,
+    index: usize,
+}
+
+pub struct VecIter<'a, T, N>
+where
+    N: ArrayLength,
+{
+    vec: &'a Vec<T, N>,
+    index: usize,
+}
+
+impl<'a, T, N> Iterator for VecIter<'a, T, N>
+where
+    N: ArrayLength,
+{
+    type Item = &'a T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.index < self.vec.len() {
+            let vec: &mut Vec<T, N> = unsafe { const_transmute_unchecked(&*self.vec) };
+            let res = Some(vec.get(self.index).unwrap());
+            self.index += 1;
+            res
+        } else {
+            None
+        }
+    }
+}
+
+impl<'a, T, N> Iterator for VecIterMut<'a, T, N>
+where
+    N: ArrayLength,
+{
+    type Item = &'a mut T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.index < self.vec.len() {
+            let vec: &mut Vec<T, N> = unsafe { const_transmute_unchecked(&mut *self.vec) };
+            let res = Some(vec.get_mut(self.index).unwrap());
+            self.index += 1;
+            res
+        } else {
+            None
+        }
+    }
 }
 
 impl<T, N> Default for Vec<T, N>
@@ -72,6 +124,20 @@ where
 
     pub const fn as_array_mut(&mut self) -> &mut [T; N::USIZE] {
         unsafe { const_transmute_unchecked(&mut self.data) }
+    }
+
+    pub fn iter<'a>(&'a mut self) -> VecIter<'a, T, N> {
+        VecIter {
+            vec: self,
+            index: 0,
+        }
+    }
+
+    pub fn iter_mut<'a>(&'a mut self) -> VecIterMut<'a, T, N> {
+        VecIterMut {
+            vec: self,
+            index: 0,
+        }
     }
 }
 
@@ -189,5 +255,19 @@ where
         let new_len = self.len - 1;
         self.len = new_len;
         self.data.get_unchecked_mut(new_len).assume_init_mut()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{Push, Vec};
+
+    #[test]
+    fn iter() {
+        let mut vec = Vec::<u8, typenum::U10>::uninit();
+        vec.push(1);
+        vec.push(2);
+        assert_eq!(2usize, vec.iter().count());
+        assert_eq!(2u8, *vec.iter_mut().last().unwrap());
     }
 }
