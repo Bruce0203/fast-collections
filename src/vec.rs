@@ -1,6 +1,7 @@
 use core::mem::MaybeUninit;
+use std::fmt::Debug;
 
-use generic_array::{ArrayLength, GenericArray, GenericArrayIter, IntoArrayLength};
+use generic_array::{ArrayLength, GenericArray, IntoArrayLength};
 use typenum::Const;
 
 use crate::{
@@ -8,11 +9,54 @@ use crate::{
     Push,
 };
 
-#[derive(Debug)]
 #[repr(C)]
 pub struct Vec<T, N: ArrayLength> {
     data: GenericArray<MaybeUninit<T>, N>,
     len: usize,
+}
+
+impl<T, N> Debug for Vec<T, N>
+where
+    T: Debug,
+    N: ArrayLength,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut list = f.debug_list();
+        list.entries(self);
+        list.finish()
+    }
+}
+
+impl<'a, T: 'a, N> IntoIterator for &'a Vec<T, N>
+where
+    N: ArrayLength,
+{
+    type Item = &'a T;
+
+    type IntoIter = VecIter<'a, T, N>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        VecIter {
+            vec: self,
+            index: 0,
+        }
+    }
+}
+
+impl<'a, T: 'a, N> IntoIterator for &'a mut Vec<T, N>
+where
+    N: ArrayLength,
+{
+    type Item = &'a mut T;
+
+    type IntoIter = VecIterMut<'a, T, N>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        VecIterMut {
+            vec: self,
+            index: 0,
+        }
+    }
 }
 
 pub struct VecIterMut<'a, T, N>
@@ -290,5 +334,6 @@ mod test {
         vec.push(2);
         assert_eq!(2usize, vec.iter().count());
         assert_eq!(2u8, *vec.iter_mut().last().unwrap());
+        println!("{:?}", vec);
     }
 }
