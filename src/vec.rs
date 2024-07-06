@@ -126,31 +126,33 @@ where
 impl<T, N> Vec<T, N>
 where
     N: ArrayLength,
+    Const<{ N::USIZE }>: IntoArrayLength<ArrayLength = N>,
+{
+    pub const fn from_array<const L: usize>(array: [T; L]) -> Self {
+        let value: [MaybeUninit<T>; N::USIZE] = unsafe { const_transmute_unchecked(array) };
+        Self {
+            data: GenericArray::from_array(value),
+            len: L,
+        }
+    }
+
+    pub const fn from_array_and_len<const L: usize>(array: [T; L], len: usize) -> Self {
+        let value: [MaybeUninit<T>; N::USIZE] = unsafe { const_transmute_unchecked(array) };
+        Self {
+            data: unsafe { const_transmute_unchecked(value) },
+            len,
+        }
+    }
+}
+
+impl<T, N> Vec<T, N>
+where
+    N: ArrayLength,
 {
     pub const fn uninit() -> Self {
         Self {
             data: GenericArray::uninit(),
             len: 0,
-        }
-    }
-
-    pub const fn from_array<const L: usize>(array: [T; L]) -> Self
-    where
-        Const<L>: IntoArrayLength<ArrayLength = N>,
-    {
-        Self {
-            data: unsafe { const_transmute_unchecked(array) },
-            len: 0,
-        }
-    }
-
-    pub const fn from_array_and_len<const L: usize>(array: [T; L], len: usize) -> Self
-    where
-        Const<L>: IntoArrayLength<ArrayLength = N>,
-    {
-        Self {
-            data: unsafe { const_transmute_unchecked(array) },
-            len,
         }
     }
 
