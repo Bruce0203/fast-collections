@@ -1,4 +1,5 @@
-# fast_collections
+# fast collections
+This crate need `generic_const_exprs` feature.
 
 0. I need a complex game system, very fast speed is required!
 1. Using String, Box<T>, and Vec<T> is slow due to heap allocation.
@@ -6,3 +7,5 @@
 2. Then there is no Cursor<T>, Vec<T>, or String<N>, but Let’s use [T;N]. However, const generics are difficult to manage 
 3. If so, let’s use GenericArray. However, it lacks Vec, Cursor, and String types.
 4. Then, let’s create a crate that uses typenum rather than const generic without heap allocation and no references.
+
+
