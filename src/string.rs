@@ -7,7 +7,7 @@ use crate::{const_transmute_unchecked, Vec};
 pub struct String<N: ArrayLength>
 where
     [u8; N::USIZE]:,
-    Const<{ N::USIZE }>: IntoArrayLength,
+    Const<{ N::USIZE }>: IntoArrayLength<ArrayLength = N>,
 {
     vec: Vec<u8, N>,
 }
