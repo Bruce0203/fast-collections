@@ -1,9 +1,10 @@
+use std::fmt::{Debug, Display, Error};
+
 use generic_array::{ArrayLength, IntoArrayLength};
 use typenum::Const;
 
 use crate::{const_transmute_unchecked, Vec};
 
-#[derive(Debug)]
 pub struct String<N: ArrayLength> {
     vec: Vec<u8, N>,
 }
@@ -42,6 +43,24 @@ where
     }
 }
 
+impl<N> Display for String<N>
+where
+    N: ArrayLength,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(std::str::from_utf8(self.vec.as_slice()).unwrap())
+    }
+}
+
+impl<N> Debug for String<N>
+where
+    N: ArrayLength,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(unsafe { std::str::from_utf8_unchecked(self.vec.as_slice()) })
+    }
+}
+
 #[cfg(test)]
 mod test {
     use typenum::U5;
@@ -55,5 +74,6 @@ mod test {
         assert_eq!(value.vec.as_slice(), *b"hell0     ");
         fn asdf(value: String<U5>) {}
         asdf(String::from_array(*b"a"));
+        println!("{:?}", value);
     }
 }
