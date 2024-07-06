@@ -1,6 +1,4 @@
-use std::mem::MaybeUninit;
-
-use generic_array::{ArrayLength, GenericArray, IntoArrayLength};
+use generic_array::{ArrayLength, IntoArrayLength};
 use typenum::Const;
 
 use crate::{const_transmute_unchecked, Vec};
@@ -11,7 +9,7 @@ where
     [u8; N::USIZE]:,
     Const<{ N::USIZE }>: IntoArrayLength,
 {
-    data: GenericArray<u8, N>,
+    vec: Vec<u8, N>,
 }
 
 impl<N: ArrayLength> String<N>
@@ -20,22 +18,32 @@ where
     Const<{ N::USIZE }>: IntoArrayLength<ArrayLength = N>,
 {
     pub const fn new() -> Self {
-        Self {
-            data: unsafe {
-                const_transmute_unchecked(GenericArray::<MaybeUninit<u8>, N>::uninit())
-            },
-        }
+        Self { vec: Vec::uninit() }
     }
 
     pub const fn from_array<const L: usize>(array: [u8; L]) -> Self {
         Self {
-            data: GenericArray::from_array(unsafe {
+            vec: Vec::from_array(unsafe {
                 let mut value = [32u8; N::USIZE];
                 let dst: &mut [u8; L] = const_transmute_unchecked(&mut value);
                 *dst = array;
                 value
             }),
         }
+    }
+
+    #[inline(always)]
+    pub const fn as_vec_mut(&mut self) -> &mut Vec<u8, N> {
+        &mut self.vec
+    }
+
+    #[inline(always)]
+    pub const fn as_vec(&self) -> &Vec<u8, N> {
+        &self.vec
+    }
+
+    pub const fn len(&self) -> usize {
+        self.vec.len()
     }
 }
 
@@ -46,7 +54,7 @@ mod test {
     #[test]
     fn test_array() {
         let value: String<typenum::U10> = String::from_array(*b"hell0");
-        println!("{:?}", value.data.as_slice());
-        assert_eq!(value.data.as_slice(), *b"hell0     ");
+        println!("{:?}", value.vec.as_slice());
+        assert_eq!(value.vec.as_slice(), *b"hell0     ");
     }
 }

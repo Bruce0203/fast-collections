@@ -3,9 +3,13 @@ use core::mem::MaybeUninit;
 use generic_array::{ArrayLength, GenericArray, GenericArrayIter, IntoArrayLength};
 use typenum::Const;
 
-use crate::{const_transmute_unchecked, Cap, Clear, Get, GetUnchecked, Index, Pop, Push};
+use crate::{
+    const_transmute_unchecked, Cap, Clear, Get, GetTransmuteUnchecked, GetUnchecked, Index, Pop,
+    Push,
+};
 
 #[derive(Debug)]
+#[repr(C)]
 pub struct Vec<T, N: ArrayLength> {
     data: GenericArray<MaybeUninit<T>, N>,
     len: usize,
@@ -201,6 +205,23 @@ where
     #[inline(always)]
     unsafe fn get_unchecked_mut(&mut self, index: usize) -> &mut T {
         self.data.get_unchecked_mut(index).assume_init_mut()
+    }
+}
+
+impl<T, N> GetTransmuteUnchecked for Vec<T, N>
+where
+    N: ArrayLength,
+{
+    #[inline(always)]
+    unsafe fn get_transmute_unchecked<V>(&self, index: Self::Index) -> &V {
+        let value = self as *const Self as *const T;
+        &*value.offset(index as isize).cast::<V>()
+    }
+
+    #[inline(always)]
+    unsafe fn get_transmute_mut_unchecked<V>(&mut self, index: Self::Index) -> &mut V {
+        let value = self as *mut Self as *mut T;
+        &mut *value.offset(index as isize).cast::<V>()
     }
 }
 
