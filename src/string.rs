@@ -4,17 +4,12 @@ use typenum::Const;
 use crate::{const_transmute_unchecked, Vec};
 
 #[derive(Debug)]
-pub struct String<N: ArrayLength>
-where
-    [u8; N::USIZE]:,
-    Const<{ N::USIZE }>: IntoArrayLength<ArrayLength = N>,
-{
+pub struct String<N: ArrayLength> {
     vec: Vec<u8, N>,
 }
 
 impl<N: ArrayLength> String<N>
 where
-    [u8; N::USIZE]:,
     Const<{ N::USIZE }>: IntoArrayLength<ArrayLength = N>,
 {
     pub const fn new() -> Self {

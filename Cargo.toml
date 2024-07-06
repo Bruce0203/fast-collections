@@ -1,6 +1,6 @@
 [package]
 name = "fast_collections"
-version = "0.26.0"
+version = "0.27.0"
 edition = "2021"
 author = "Bruce0203 <brucefreedy@gmail.com>"
 description = "noheap zero copy collections"
