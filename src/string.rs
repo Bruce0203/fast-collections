@@ -44,6 +44,8 @@ where
 
 #[cfg(test)]
 mod test {
+    use typenum::U5;
+
     use crate::String;
 
     #[test]
@@ -51,5 +53,7 @@ mod test {
         let value: String<typenum::U10> = String::from_array(*b"hell0");
         println!("{:?}", value.vec.as_slice());
         assert_eq!(value.vec.as_slice(), *b"hell0     ");
+        fn asdf(value: String<U5>) {}
+        asdf(String::from_array(*b"a"));
     }
 }
