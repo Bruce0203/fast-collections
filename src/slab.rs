@@ -35,8 +35,8 @@ where
         self.chunk.get_unchecked_mut(index)
     }
 
-    unsafe fn get_unchecked_ref(&self, index: Self::Index) -> &T {
-        self.chunk.get_unchecked_ref(index)
+    unsafe fn get_unchecked(&self, index: Self::Index) -> &T {
+        self.chunk.get_unchecked(index)
     }
 }
 
@@ -114,14 +114,14 @@ mod test {
             .add_with_index(|index| A { inner: 456, index })
             .unwrap();
         assert_eq!(
-            unsafe { value.get_unchecked_ref(0) },
+            unsafe { value.get_unchecked(0) },
             &A {
                 inner: 123,
                 index: 0
             }
         );
         assert_eq!(
-            unsafe { value.get_unchecked_ref(1) },
+            unsafe { value.get_unchecked(1) },
             &A {
                 inner: 456,
                 index: 1

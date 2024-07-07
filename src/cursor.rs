@@ -275,7 +275,7 @@ where
     N: ArrayLength,
 {
     #[inline(always)]
-    unsafe fn get_unchecked_ref(&self, index: Self::Index) -> &T {
+    unsafe fn get_unchecked(&self, index: Self::Index) -> &T {
         self.buffer.get_unchecked(index).assume_init_ref()
     }
 

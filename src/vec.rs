@@ -246,7 +246,7 @@ impl<T, N> GetUnchecked<T> for Vec<T, N>
 where
     N: ArrayLength,
 {
-    unsafe fn get_unchecked_ref(&self, index: usize) -> &T {
+    unsafe fn get_unchecked(&self, index: usize) -> &T {
         self.data.get_unchecked(index).assume_init_ref()
     }
 
@@ -279,7 +279,7 @@ where
 {
     fn get(&self, index: usize) -> Option<&T> {
         if N::USIZE > index {
-            Some(unsafe { self.get_unchecked_ref(index) })
+            Some(unsafe { self.get_unchecked(index) })
         } else {
             None
         }
