@@ -13,6 +13,7 @@ include = [
 
 [dependencies]
 generic-array = { version = "1.0.0", features = ["const-default"] }
+holder = "0.4.0"
 mutification = "0.1.0"
 rand = "0.8.5"
 typenum = "1.17.0"
@@ -23,3 +24,6 @@ criterion = "0.5.1"
 [[bench]]
 name = "slab"
 harness = false
+
+[features]
+holder = []

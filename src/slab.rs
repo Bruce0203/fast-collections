@@ -1,10 +1,11 @@
 use generic_array::ArrayLength;
+use holder::Holdable;
 use mutification::ToMut;
 
 use crate::{Clear, GetUnchecked, Index, Pop, Push, RemoveUnchecked, Vec};
 
 ///Simply store element fast without any other features like get length, and iteration.
-#[derive(ToMut)]
+#[derive(ToMut, Holdable)]
 pub struct Slab<T, N: ArrayLength> {
     chunk: Vec<T, N>,
     spares: Vec<usize, N>,
