@@ -7,8 +7,10 @@ use core::{
     slice::from_raw_parts,
 };
 use generic_array::{ArrayLength, GenericArray};
+use mutification::ToMut;
 
 #[repr(C)]
+#[derive(ToMut)]
 pub struct Cursor<T, N: ArrayLength> {
     buffer: GenericArray<MaybeUninit<T>, N>,
     pos: usize,

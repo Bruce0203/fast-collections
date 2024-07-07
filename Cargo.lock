@@ -184,6 +184,7 @@ version = "0.29.0"
 dependencies = [
  "criterion",
  "generic-array",
+ "mutification",
  "rand",
  "typenum",
 ]
@@ -277,6 +278,16 @@ name = "memchr"
 version = "2.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6c8640c5d730cb13ebd907d8d04b52f55ac9a2eec55b440c8892f40d56c76c1d"
+
+[[package]]
+name = "mutification"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3686054f389589261244dde206fd23ea75e94cdf98ed0ba71120bb6fda84d78e"
+dependencies = [
+ "quote",
+ "syn",
+]
 
 [[package]]
 name = "num-traits"
@@ -478,9 +489,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.66"
+version = "2.0.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c42f3f41a2de00b01c0aaad383c5a45241efc8b2d1eda5661812fda5f3cdcff5"
+checksum = "201fcda3845c23e8212cd466bfebf0bd20694490fc0356ae8e428e0824a915a6"
 dependencies = [
  "proc-macro2",
  "quote",

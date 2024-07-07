@@ -1,10 +1,12 @@
 use std::fmt::{Debug, Display, Error};
 
 use generic_array::{ArrayLength, IntoArrayLength};
+use mutification::ToMut;
 use typenum::Const;
 
 use crate::{const_transmute_unchecked, Vec};
 
+#[derive(ToMut)]
 pub struct String<N: ArrayLength> {
     vec: Vec<u8, N>,
 }
