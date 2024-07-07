@@ -192,11 +192,32 @@ name = "fast_collections"
 version = "0.33.0"
 dependencies = [
  "criterion",
+ "fast_delegate",
  "generic-array",
  "holder",
  "mutification",
  "rand",
  "typenum",
+]
+
+[[package]]
+name = "fast_delegate"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fe96fe93883a4c9532ef8a0948b7b9287466b4e0963a5e9cf6b7edae5afd69cc"
+dependencies = [
+ "fast_delegate_derive",
+]
+
+[[package]]
+name = "fast_delegate_derive"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "606073acad0f7d8dcaa466982dc0c5631a67de705f4fa42d8126c7ed4a102194"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
