@@ -12,15 +12,15 @@ pub struct String<N: ArrayLength> {
     vec: Vec<u8, N>,
 }
 
-impl<N: ArrayLength> String<N>
-where
-    Const<{ N::USIZE }>: IntoArrayLength<ArrayLength = N>,
-{
+impl<N: ArrayLength> String<N> {
     pub const fn new() -> Self {
         Self { vec: Vec::uninit() }
     }
 
-    pub const fn from_array<const L: usize>(array: [u8; L]) -> Self {
+    pub const fn from_array<const L: usize>(array: [u8; L]) -> Self
+    where
+        Const<{ N::USIZE }>: IntoArrayLength<ArrayLength = N>,
+    {
         Self {
             vec: Vec::from_array(unsafe {
                 let mut value = [32u8; N::USIZE];
