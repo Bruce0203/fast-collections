@@ -1,6 +1,7 @@
 use crate::{
-    Cap, Clear, CursorRead, CursorReadTransmute, GetTransmute, GetTransmuteUnchecked, GetUnchecked,
-    Index, Push, PushTransmute, PushTransmuteUnchecked, SetTransmute,
+    const_transmute_unchecked, Cap, Clear, CursorRead, CursorReadTransmute, GetTransmute,
+    GetTransmuteUnchecked, GetUnchecked, Index, Push, PushTransmute, PushTransmuteUnchecked,
+    SetTransmute,
 };
 use core::{
     mem::{size_of, MaybeUninit},
@@ -134,6 +135,11 @@ where
             (self.buffer.as_mut_ptr() as *mut T).offset(self.filled_len as isize),
             N::USIZE - self.filled_len,
         )
+    }
+
+    #[inline(always)]
+    pub const fn as_array(&mut self) -> &mut [T; N::USIZE] {
+        unsafe { const_transmute_unchecked(self) }
     }
 }
 
