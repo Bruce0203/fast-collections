@@ -79,17 +79,18 @@ impl<N> Cursor<u8, N>
 where
     N: ArrayLength,
 {
-    //TODO need test
-    pub fn copy_from_cursor<N2: ArrayLength>(
-        &mut self,
-        src: &mut Cursor<u8, N2>,
-    ) -> Result<(), ()> {
+    ///Clear src fill dst
+    pub fn push_from_cursor<N2: ArrayLength>(&mut self, src: &mut Cursor<u8, N2>) -> Result<(), ()>
+    where
+        [(); N2::USIZE]:,
+    {
         let dst = self;
         let src_filled_len = src.filled_len();
         let dst_filled_len = *unsafe { dst.filled_len_mut() };
         if src_filled_len + dst_filled_len < <N as Unsigned>::USIZE {
             let unfilled = unsafe { dst.unfilled_mut() };
-            unfilled[..src_filled_len].copy_from_slice(src.filled());
+            let src_pos = src.pos();
+            unfilled[..src_filled_len].copy_from_slice(&src.as_array()[src_pos..src_filled_len]);
             unsafe { *dst.filled_len_mut() = dst_filled_len.unchecked_add(src_filled_len) };
             src.clear();
             Ok(())
@@ -336,10 +337,14 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::{CursorRead, CursorReadTransmute, Push};
+    use crate::{
+        const_transmute_unchecked, CursorRead, CursorReadTransmute, GetTransmute, Push,
+        PushTransmute,
+    };
 
     use super::Cursor;
     use generic_array::typenum::{U100, U8};
+    use rand::Rng;
 
     #[test]
     fn test() {
@@ -375,5 +380,24 @@ mod test {
         unsafe { *buffer.pos_mut() = 1 }
         assert_eq!(buffer.read_transmute::<[u8; 2]>().unwrap(), &[2, 3]);
         assert_eq!(buffer.read_transmute::<[u8; 2]>(), None);
+    }
+
+    #[test]
+    fn test_cursor_push() {
+        let mut cursor: Cursor<u8, U100> = Cursor::new();
+        let value: [u8; 2] = unsafe { const_transmute_unchecked(100u16) };
+        cursor.push_transmute(260u16).unwrap();
+        assert_eq!(cursor.filled_len(), 2);
+        assert_eq!(cursor.read_transmute::<u16>().unwrap(), &260u16);
+    }
+
+    #[test]
+    fn test_cursor_copy_from_cursor() {
+        let mut dst: Cursor<u8, U100> = Cursor::new();
+        let mut src: Cursor<u8, U100> = Cursor::new();
+        let value: usize = rand::thread_rng().gen();
+        src.push_transmute(value).unwrap();
+        dst.push_from_cursor(&mut src).unwrap();
+        assert_eq!(dst.read_transmute::<usize>().unwrap(), &value);
     }
 }

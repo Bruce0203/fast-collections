@@ -1,6 +1,6 @@
 [package]
 name = "fast_collections"
-version = "0.38.0"
+version = "0.39.0"
 edition = "2021"
 author = "Bruce0203 <brucefreedy@gmail.com>"
 description = "noheap zero copy collections"
@@ -17,6 +17,7 @@ typenum = "1.17.0"
 
 [dev-dependencies]
 criterion = "0.5.1"
+rand = "0.8.5"
 
 [[bench]]
 name = "slab"
