@@ -8,6 +8,8 @@ use core::{
     slice::from_raw_parts,
 };
 use generic_array::{ArrayLength, GenericArray};
+use std::ops::DerefMut;
+use typenum::Unsigned;
 
 #[repr(C)]
 pub struct Cursor<T, N: ArrayLength> {
@@ -70,6 +72,29 @@ where
     #[inline(always)]
     fn capacity(&self) -> usize {
         N::USIZE
+    }
+}
+
+impl<N> Cursor<u8, N>
+where
+    N: ArrayLength,
+{
+    pub fn copy_from_cursor<N2: ArrayLength>(
+        &mut self,
+        src: &mut Cursor<u8, N2>,
+    ) -> Result<(), ()> {
+        let dst = self;
+        let src_filled_len = src.filled_len();
+        let dst_filled_len = *unsafe { dst.filled_len_mut() };
+        if src_filled_len + dst_filled_len < <N as Unsigned>::USIZE {
+            let unfilled = unsafe { dst.unfilled_mut() };
+            unfilled[..src_filled_len].copy_from_slice(src.filled());
+            unsafe { *dst.filled_len_mut() = dst_filled_len.unchecked_add(src_filled_len) };
+            src.clear();
+            Ok(())
+        } else {
+            Err(())
+        }
     }
 }
 
