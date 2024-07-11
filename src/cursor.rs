@@ -248,7 +248,7 @@ where
     N: ArrayLength,
 {
     fn push_transmute<V>(&mut self, value: V) -> Result<(), ()> {
-        if size_of::<V>() + self.pos < N::USIZE {
+        if size_of::<V>() + self.filled_len < N::USIZE {
             Ok(unsafe { self.push_transmute_unchecked(value) })
         } else {
             Err(())
