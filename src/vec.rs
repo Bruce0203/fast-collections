@@ -2,8 +2,6 @@ use core::mem::MaybeUninit;
 use std::fmt::Debug;
 
 use generic_array::{ArrayLength, GenericArray, IntoArrayLength};
-use holder::Holdable;
-use mutification::ToMut;
 use typenum::Const;
 
 use crate::{
@@ -12,7 +10,6 @@ use crate::{
 };
 
 #[repr(C)]
-#[derive(ToMut, Holdable)]
 pub struct Vec<T, N: ArrayLength> {
     data: GenericArray<MaybeUninit<T>, N>,
     len: usize,

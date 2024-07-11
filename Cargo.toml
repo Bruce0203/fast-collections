@@ -14,8 +14,6 @@ include = [
 [dependencies]
 fast_delegate = "0.11.0"
 generic-array = { version = "1.0.0", features = ["const-default"] }
-holder = { version = "0.4.0", features = ["fast_delegate"] }
-mutification = "0.1.0"
 rand = "0.8.5"
 typenum = "1.17.0"
 
