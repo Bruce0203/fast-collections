@@ -19,12 +19,15 @@ impl<N: ArrayLength> String<N> {
         Const<{ N::USIZE }>: IntoArrayLength<ArrayLength = N>,
     {
         Self {
-            vec: Vec::from_array(unsafe {
-                let mut value = [32u8; N::USIZE];
-                let dst: &mut [u8; L] = const_transmute_unchecked(&mut value);
-                *dst = array;
-                value
-            }),
+            vec: Vec::from_array_and_len(
+                unsafe {
+                    let mut value = [32u8; N::USIZE];
+                    let dst: &mut [u8; L] = const_transmute_unchecked(&mut value);
+                    *dst = array;
+                    value
+                },
+                L,
+            ),
         }
     }
 
