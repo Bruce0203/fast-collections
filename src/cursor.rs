@@ -79,6 +79,7 @@ impl<N> Cursor<u8, N>
 where
     N: ArrayLength,
 {
+    //TODO need test
     pub fn copy_from_cursor<N2: ArrayLength>(
         &mut self,
         src: &mut Cursor<u8, N2>,
