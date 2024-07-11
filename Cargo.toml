@@ -1,6 +1,6 @@
 [package]
 name = "fast_collections"
-version = "0.35.0"
+version = "0.36.0"
 edition = "2021"
 author = "Bruce0203 <brucefreedy@gmail.com>"
 description = "noheap zero copy collections"
@@ -12,9 +12,7 @@ include = [
 ]
 
 [dependencies]
-fast_delegate = "0.11.0"
 generic-array = { version = "1.0.0", features = ["const-default"] }
-rand = "0.8.5"
 typenum = "1.17.0"
 
 [dev-dependencies]
