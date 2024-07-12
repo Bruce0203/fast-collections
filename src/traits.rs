@@ -75,4 +75,3 @@ pub trait SetTransmute {
     fn set_transmute<V>(&mut self, index: usize, value: V) -> Result<(), ()>;
     unsafe fn set_transmute_unchecked<V>(&mut self, index: usize, value: V);
 }
-

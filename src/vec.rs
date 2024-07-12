@@ -189,6 +189,10 @@ where
             index: 0,
         }
     }
+
+    const fn is_empty(&self) -> bool {
+        self.len == 0
+    }
 }
 
 impl<T, N> Clear for Vec<T, N>
