@@ -164,6 +164,11 @@ where
     pub const fn as_array(&mut self) -> &mut [T; N::USIZE] {
         unsafe { const_transmute_unchecked(self) }
     }
+
+    #[inline(always)]
+    pub const fn remaining(&self) -> usize {
+        self.filled_len - self.pos
+    }
 }
 
 impl<T, N> CursorRead<T> for Cursor<T, N>
