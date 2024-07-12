@@ -64,6 +64,17 @@ where
     }
 }
 
+impl<N> Clone for String<N>
+where
+    N: ArrayLength,
+{
+    fn clone(&self) -> Self {
+        Self {
+            vec: self.vec.clone(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use typenum::U5;

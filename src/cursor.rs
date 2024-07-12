@@ -8,7 +8,6 @@ use core::{
     slice::from_raw_parts,
 };
 use generic_array::{ArrayLength, GenericArray};
-use std::ops::DerefMut;
 use typenum::Unsigned;
 
 #[repr(C)]
@@ -335,12 +334,25 @@ where
     }
 }
 
+impl<T: Copy, N> Clone for Cursor<T, N>
+where
+    N: ArrayLength,
+    [(); N::USIZE]:,
+{
+    fn clone(&self) -> Self {
+        let mut cursor = Self {
+            buffer: GenericArray::uninit(),
+            pos: self.pos.clone(),
+            filled_len: self.filled_len.clone(),
+        };
+        cursor.buffer.copy_from_slice(&self.buffer.as_slice());
+        cursor
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use crate::{
-        const_transmute_unchecked, CursorRead, CursorReadTransmute, GetTransmute, Push,
-        PushTransmute,
-    };
+    use crate::{const_transmute_unchecked, CursorRead, CursorReadTransmute, Push, PushTransmute};
 
     use super::Cursor;
     use generic_array::typenum::{U100, U8};

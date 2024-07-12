@@ -325,6 +325,20 @@ where
     }
 }
 
+impl<T: Copy, N> Clone for Vec<T, N>
+where
+    N: ArrayLength,
+{
+    fn clone(&self) -> Self {
+        let mut vec = Self {
+            data: GenericArray::uninit(),
+            len: self.len.clone(),
+        };
+        vec.data.copy_from_slice(self.data.as_slice());
+        vec
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::{Push, Vec};
