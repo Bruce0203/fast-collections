@@ -1,14 +1,18 @@
+use std::marker::PhantomData;
+
 use generic_array::ArrayLength;
 
 use crate::{Clear, GetUnchecked, Index, Pop, Push, RemoveUnchecked, Vec};
 
 ///Simply store element fast without any other features like get length, and iteration.
-pub struct Slab<T, N: ArrayLength> {
+pub struct Slab<I, T, N: ArrayLength> {
     chunk: Vec<T, N>,
     spares: Vec<usize, N>,
+    item_ptrs: Vec<usize, N>,
+    _marker: PhantomData<I>,
 }
 
-impl<T, N> Default for Slab<T, N>
+impl<I, T, N> Default for Slab<I, T, N>
 where
     N: ArrayLength,
 {
@@ -16,29 +20,35 @@ where
         Self {
             chunk: Default::default(),
             spares: Default::default(),
+            item_ptrs: Default::default(),
+            _marker: PhantomData,
         }
     }
 }
 
-impl<T, N: ArrayLength> Index for Slab<T, N> {
-    type Index = usize;
+impl<I, T, N: ArrayLength> Index for Slab<I, T, N>
+where
+    I: Into<usize>,
+{
+    type Index = I;
 }
 
-impl<T, N> GetUnchecked<T> for Slab<T, N>
+impl<I, T, N> GetUnchecked<T> for Slab<I, T, N>
 where
+    I: Into<usize>,
     N: ArrayLength,
 {
     ///After removing an element, be cautious as you might still unintentionally access it using [Self::get_unchecked_mut].
-    unsafe fn get_unchecked_mut(&mut self, index: usize) -> &mut T {
-        self.chunk.get_unchecked_mut(index)
+    unsafe fn get_unchecked_mut(&mut self, index: Self::Index) -> &mut T {
+        self.chunk.get_unchecked_mut(index.into())
     }
 
     unsafe fn get_unchecked(&self, index: Self::Index) -> &T {
-        self.chunk.get_unchecked(index)
+        self.chunk.get_unchecked(index.into())
     }
 }
 
-impl<T, N> Clear for Slab<T, N>
+impl<I, T, N> Clear for Slab<I, T, N>
 where
     N: ArrayLength,
 {
@@ -48,30 +58,34 @@ where
     }
 }
 
-impl<T, N> RemoveUnchecked for Slab<T, N>
+impl<I, T, N> RemoveUnchecked for Slab<I, T, N>
 where
+    I: Into<usize>,
     N: ArrayLength,
 {
-    unsafe fn remove_unchecked(&mut self, index: usize) {
-        self.spares.push_unchecked(index);
+    unsafe fn remove_unchecked(&mut self, index: Self::Index) {
+        self.spares.push_unchecked(index.into());
     }
 }
 
-impl<T, N> Slab<T, N>
+impl<I, T, N> Slab<I, T, N>
 where
+    I: Into<usize>,
     N: ArrayLength,
 {
-    pub fn new() -> Slab<T, N> {
+    pub fn new() -> Slab<I, T, N> {
         Slab {
             chunk: Vec::uninit(),
             spares: Vec::uninit(),
+            _marker: PhantomData,
+            item_ptrs: Vec::uninit(),
         }
     }
 
     #[inline(always)]
-    pub fn add_with_index<F>(&mut self, f: F) -> Result<<Self as Index>::Index, ()>
+    pub fn add_with_index<F>(&mut self, f: F) -> Result<usize, ()>
     where
-        F: FnOnce(<Self as Index>::Index) -> T,
+        F: FnOnce(usize) -> T,
     {
         if self.spares.len() == 0 {
             let index = self.chunk.len();
@@ -104,7 +118,7 @@ mod test {
             inner: usize,
             index: usize,
         }
-        let mut value = Slab::<A, U100>::new();
+        let mut value = Slab::<usize, A, U100>::new();
         value
             .add_with_index(|index| A { inner: 123, index })
             .unwrap();

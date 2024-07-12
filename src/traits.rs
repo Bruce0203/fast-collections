@@ -1,5 +1,5 @@
 pub trait Index {
-    type Index;
+    type Index: Into<usize>;
 }
 
 pub trait Pop<T> {
