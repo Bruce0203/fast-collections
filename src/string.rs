@@ -5,6 +5,7 @@ use typenum::Const;
 
 use crate::{const_transmute_unchecked, Vec};
 
+#[derive(Default)]
 pub struct String<N: ArrayLength> {
     vec: Vec<u8, N>,
 }
