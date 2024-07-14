@@ -1,7 +1,7 @@
 use std::fmt::{Debug, Display, Error};
 
 use generic_array::{ArrayLength, IntoArrayLength};
-use typenum::Const;
+use typenum::{Const, Min, Minimum, PInt, Unsigned};
 
 use crate::{const_transmute_unchecked, Vec};
 
@@ -18,6 +18,7 @@ impl<N: ArrayLength> String<N> {
     pub const fn from_array<const L: usize>(array: [u8; L]) -> Self
     where
         Const<{ N::USIZE }>: IntoArrayLength<ArrayLength = N>,
+        Const<{ L }>: IntoArrayLength,
     {
         Self {
             vec: Vec::from_array_and_len(
@@ -27,7 +28,7 @@ impl<N: ArrayLength> String<N> {
                     *dst = array;
                     value
                 },
-                L,
+                const { min(L, N::USIZE) },
             ),
         }
     }
@@ -44,6 +45,14 @@ impl<N: ArrayLength> String<N> {
 
     pub const fn len(&self) -> usize {
         self.vec.len()
+    }
+}
+
+const fn min(value: usize, value2: usize) -> usize {
+    if value < value2 {
+        value
+    } else {
+        value2
     }
 }
 
@@ -90,5 +99,10 @@ mod test {
         fn asdf(value: String<U5>) {}
         asdf(String::from_array(*b"a"));
         println!("{:?}", value);
+    }
+    #[test]
+    fn asdf() {
+        let value: String<typenum::U4> = String::from_array(*b"123123123123");
+        assert_eq!(value.len(), 4);
     }
 }
