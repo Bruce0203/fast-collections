@@ -46,6 +46,10 @@ impl<N: ArrayLength> String<N> {
     pub const fn len(&self) -> usize {
         self.vec.len()
     }
+
+    pub fn as_str(&self) -> &str {
+        unsafe { core::str::from_utf8_unchecked(&self.as_vec().as_slice()[..self.len()]) }
+    }
 }
 
 impl<N> Display for String<N>
@@ -53,7 +57,7 @@ where
     N: ArrayLength,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(std::str::from_utf8(self.vec.as_slice()).unwrap())
+        f.write_str(std::str::from_utf8(&self.vec.as_slice()[..self.len()]).unwrap())
     }
 }
 
@@ -62,7 +66,7 @@ where
     N: ArrayLength,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(unsafe { std::str::from_utf8_unchecked(self.vec.as_slice()) })
+        f.write_str(unsafe { std::str::from_utf8_unchecked(&self.vec.as_slice()[..self.len()]) })
     }
 }
 
@@ -79,7 +83,7 @@ where
 
 #[cfg(test)]
 mod test {
-    use typenum::U5;
+    use typenum::{U100, U5};
 
     use crate::String;
 
@@ -96,5 +100,11 @@ mod test {
     fn asdf() {
         let value: String<typenum::U4> = String::from_array(*b"123123123123");
         assert_eq!(value.len(), 4);
+    }
+
+    #[test]
+    fn test_print() {
+        let string = String::<U100>::from_array(*b"abcd");
+        assert_eq!(string.as_str(), "abcd");
     }
 }
