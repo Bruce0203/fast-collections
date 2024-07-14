@@ -5,8 +5,8 @@ use generic_array::{ArrayLength, GenericArray, IntoArrayLength};
 use typenum::Const;
 
 use crate::{
-    const_transmute_unchecked, Cap, Clear, Get, GetTransmuteUnchecked, GetUnchecked, Index, Pop,
-    Push,
+    const_transmute_unchecked, min, Cap, Clear, Get, GetTransmuteUnchecked, GetUnchecked, Index,
+    Pop, Push,
 };
 
 #[repr(C)]
@@ -132,7 +132,7 @@ where
         let value: [MaybeUninit<T>; N::USIZE] = unsafe { const_transmute_unchecked(array) };
         Self {
             data: GenericArray::from_array(value),
-            len: L,
+            len: const { min(N::USIZE, L) },
         }
     }
 

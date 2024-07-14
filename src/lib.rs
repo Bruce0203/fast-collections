@@ -38,3 +38,12 @@ pub const unsafe fn const_transmute_unchecked<A, B>(a: A) -> B {
     let a = ManuallyDrop::new(a);
     ManuallyDrop::into_inner(Union { a }.b)
 }
+
+pub(crate) const fn min(value: usize, value2: usize) -> usize {
+    if value < value2 {
+        value
+    } else {
+        value2
+    }
+}
+
