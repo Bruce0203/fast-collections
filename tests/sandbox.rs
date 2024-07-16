@@ -6,3 +6,4 @@ fn test() {
         println!("{number}");
     }
 }
+

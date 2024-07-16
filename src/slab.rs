@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use generic_array::ArrayLength;
 
-use crate::{Clear, GetUnchecked, Index, Pop, Push, RemoveUnchecked, Vec};
+use crate::{Clear, Get, GetUnchecked, Index, Pop, Push, RemoveUnchecked, Vec};
 
 ///Simply store element fast without any other features like get length, and iteration.
 pub struct Slab<I, T, N: ArrayLength> {
@@ -10,6 +10,23 @@ pub struct Slab<I, T, N: ArrayLength> {
     spares: Vec<usize, N>,
     item_ptrs: Vec<usize, N>,
     _marker: PhantomData<I>,
+}
+
+pub auto trait NotCloneAndCopy {}
+impl<T: Clone + Copy> !NotCloneAndCopy for T {}
+
+impl<I, T, N> Get<T> for Slab<I, T, N>
+where
+    I: Into<usize> + NotCloneAndCopy,
+    N: ArrayLength,
+{
+    fn get(&self, index: Self::Index) -> Option<&T> {
+        Some(unsafe { self.get_unchecked(index) })
+    }
+
+    fn get_mut(&mut self, index: Self::Index) -> Option<&mut T> {
+        Some(unsafe { self.get_unchecked_mut(index) })
+    }
 }
 
 impl<I, T, N> Default for Slab<I, T, N>
@@ -106,7 +123,7 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::GetUnchecked;
+    use crate::{Get, GetUnchecked, NotCloneAndCopy};
 
     use super::Slab;
     use generic_array::typenum::U100;
@@ -139,5 +156,18 @@ mod test {
                 index: 1
             }
         );
+    }
+
+    #[test]
+    fn not_clone_copy_test() {
+        pub struct Id(usize);
+        impl NotCloneAndCopy for Id {}
+        impl Into<usize> for Id {
+            fn into(self) -> usize {
+                self.0
+            }
+        }
+        let slab: Slab<Id, bool, U100> = Slab::new();
+        let value = slab.get(Id(0));
     }
 }
