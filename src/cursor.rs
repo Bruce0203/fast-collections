@@ -306,6 +306,16 @@ impl<T: Copy, const N: usize> Clone for Cursor<T, N> {
     }
 }
 
+#[cfg(feature = "std")]
+impl<const N: usize> Cursor<u8, N> {
+    pub fn push_from_read<R: std::io::Read>(&mut self, read: &mut R) -> std::io::Result<()> {
+        let unfilled = unsafe { self.unfilled_mut() };
+        let read_length = read.read(unfilled)?;
+        unsafe { *self.filled_len_mut() += read_length };
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod test {
     use crate::{const_transmute_unchecked, CursorRead, CursorReadTransmute, Push, PushTransmute};
