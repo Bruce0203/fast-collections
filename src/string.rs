@@ -1,34 +1,27 @@
 use std::fmt::{Debug, Display, Error};
 
-use generic_array::{ArrayLength, IntoArrayLength};
-use typenum::{Const, Min, Minimum, PInt, Unsigned};
-
 use crate::{const_transmute_unchecked, min, Vec};
 
 #[derive(Default)]
-pub struct String<N: ArrayLength> {
+pub struct String<const N: usize> {
     vec: Vec<u8, N>,
 }
 
-impl<N: ArrayLength> String<N> {
+impl<const N: usize> String<N> {
     pub const fn new() -> Self {
         Self { vec: Vec::uninit() }
     }
 
-    pub const fn from_array<const L: usize>(array: [u8; L]) -> Self
-    where
-        Const<{ N::USIZE }>: IntoArrayLength<ArrayLength = N>,
-        Const<{ L }>: IntoArrayLength,
-    {
+    pub const fn from_array<const L: usize>(array: [u8; L]) -> Self {
         Self {
             vec: Vec::from_array_and_len(
                 unsafe {
-                    let mut value = [32u8; N::USIZE];
+                    let mut value = [32u8; N];
                     let dst: &mut [u8; L] = const_transmute_unchecked(&mut value);
                     *dst = array;
                     value
                 },
-                const { min(L, N::USIZE) },
+                const { min(L, N) },
             ),
         }
     }
@@ -52,28 +45,19 @@ impl<N: ArrayLength> String<N> {
     }
 }
 
-impl<N> Display for String<N>
-where
-    N: ArrayLength,
-{
+impl<const N: usize> Display for String<N> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(std::str::from_utf8(&self.vec.as_slice()[..self.len()]).unwrap())
     }
 }
 
-impl<N> Debug for String<N>
-where
-    N: ArrayLength,
-{
+impl<const N: usize> Debug for String<N> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(unsafe { std::str::from_utf8_unchecked(&self.vec.as_slice()[..self.len()]) })
     }
 }
 
-impl<N> Clone for String<N>
-where
-    N: ArrayLength,
-{
+impl<const N: usize> Clone for String<N> {
     fn clone(&self) -> Self {
         Self {
             vec: self.vec.clone(),
@@ -83,28 +67,26 @@ where
 
 #[cfg(test)]
 mod test {
-    use typenum::{U100, U5};
-
     use crate::String;
 
     #[test]
     fn test_array() {
-        let value: String<typenum::U10> = String::from_array(*b"hell0");
+        let value: String<10> = String::from_array(*b"hell0");
         println!("{:?}", value.vec.as_slice());
         assert_eq!(value.vec.as_slice(), *b"hell0     ");
-        fn asdf(value: String<U5>) {}
+        fn asdf(value: String<5>) {}
         asdf(String::from_array(*b"a"));
         println!("{:?}", value);
     }
     #[test]
     fn asdf() {
-        let value: String<typenum::U4> = String::from_array(*b"123123123123");
+        let value: String<4> = String::from_array(*b"123123123123");
         assert_eq!(value.len(), 4);
     }
 
     #[test]
     fn test_print() {
-        let string = String::<U100>::from_array(*b"abcd");
+        let string = String::<100>::from_array(*b"abcd");
         assert_eq!(string.as_str(), "abcd");
     }
 }

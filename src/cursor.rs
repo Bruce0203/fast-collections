@@ -7,34 +7,26 @@ use core::{
     mem::{size_of, MaybeUninit},
     slice::from_raw_parts,
 };
-use generic_array::{ArrayLength, GenericArray};
-use typenum::Unsigned;
 
 #[repr(C)]
-pub struct Cursor<T, N: ArrayLength> {
-    buffer: GenericArray<MaybeUninit<T>, N>,
+pub struct Cursor<T, const N: usize> {
+    buffer: [MaybeUninit<T>; N],
     pos: usize,
     filled_len: usize,
 }
 
-impl<T, N> Default for Cursor<T, N>
-where
-    N: ArrayLength,
-{
+impl<T, const N: usize> Default for Cursor<T, N> {
     #[inline(always)]
     fn default() -> Self {
         Self {
-            buffer: GenericArray::uninit(),
+            buffer: [const { MaybeUninit::uninit() }; N],
             pos: Default::default(),
             filled_len: Default::default(),
         }
     }
 }
 
-impl<T, N> Push<T> for Cursor<T, N>
-where
-    N: ArrayLength,
-{
+impl<T, const N: usize> Push<T> for Cursor<T, N> {
     #[inline(always)]
     fn push(&mut self, item: T) -> Result<(), T> {
         if self.filled_len < self.capacity() {
@@ -51,10 +43,7 @@ where
     }
 }
 
-impl<T, N> Clear for Cursor<T, N>
-where
-    N: ArrayLength,
-{
+impl<T, const N: usize> Clear for Cursor<T, N> {
     #[inline(always)]
     fn clear(&mut self) {
         self.filled_len = 0;
@@ -62,31 +51,25 @@ where
     }
 }
 
-impl<T, N> Cap for Cursor<T, N>
-where
-    N: ArrayLength,
-{
+impl<T, const N: usize> Cap for Cursor<T, N> {
     type Cap = usize;
 
     #[inline(always)]
     fn capacity(&self) -> usize {
-        N::USIZE
+        N
     }
 }
 
-impl<N> Cursor<u8, N>
-where
-    N: ArrayLength,
-{
+impl<const N: usize> Cursor<u8, N> {
     ///Clear src fill dst
-    pub fn push_from_cursor<N2: ArrayLength>(&mut self, src: &mut Cursor<u8, N2>) -> Result<(), ()>
-    where
-        [(); N2::USIZE]:,
-    {
+    pub fn push_from_cursor<const N2: usize>(
+        &mut self,
+        src: &mut Cursor<u8, N2>,
+    ) -> Result<(), ()> {
         let dst = self;
         let src_filled_len = src.filled_len();
         let dst_filled_len = *unsafe { dst.filled_len_mut() };
-        if src_filled_len + dst_filled_len < <N as Unsigned>::USIZE {
+        if src_filled_len + dst_filled_len < N {
             let unfilled = unsafe { dst.unfilled_mut() };
             let src_pos = src.pos();
             unfilled[..src_filled_len].copy_from_slice(&src.as_array()[src_pos..src_filled_len]);
@@ -99,14 +82,11 @@ where
     }
 }
 
-impl<T, N> Cursor<T, N>
-where
-    N: ArrayLength,
-{
+impl<T, const N: usize> Cursor<T, N> {
     #[inline(always)]
     pub const fn new() -> Self {
         Self {
-            buffer: GenericArray::uninit(),
+            buffer: [const { MaybeUninit::uninit() }; N],
             pos: 0,
             filled_len: 0,
         }
@@ -147,7 +127,7 @@ where
         unsafe {
             from_raw_parts(
                 (self.buffer.as_ptr() as *const T).offset(self.filled_len as isize),
-                N::USIZE - self.filled_len,
+                N - self.filled_len,
             )
         }
     }
@@ -156,12 +136,12 @@ where
     pub unsafe fn unfilled_mut(&mut self) -> &mut [T] {
         core::slice::from_raw_parts_mut(
             (self.buffer.as_mut_ptr() as *mut T).offset(self.filled_len as isize),
-            N::USIZE - self.filled_len,
+            N - self.filled_len,
         )
     }
 
     #[inline(always)]
-    pub const fn as_array(&mut self) -> &mut [T; N::USIZE] {
+    pub const fn as_array(&mut self) -> &mut [T; N] {
         unsafe { const_transmute_unchecked(self) }
     }
 
@@ -171,10 +151,7 @@ where
     }
 }
 
-impl<T, N> CursorRead<T> for Cursor<T, N>
-where
-    N: ArrayLength,
-{
+impl<T, const N: usize> CursorRead<T> for Cursor<T, N> {
     #[inline(always)]
     fn read(&mut self) -> Option<&T> {
         let pos = self.pos().clone();
@@ -194,13 +171,10 @@ where
     }
 }
 
-impl<T, N> GetTransmute for Cursor<T, N>
-where
-    N: ArrayLength,
-{
+impl<T, const N: usize> GetTransmute for Cursor<T, N> {
     #[inline(always)]
     fn get_transmute<V>(&self, index: Self::Index) -> Option<&V> {
-        if index < N::USIZE as Self::Index {
+        if index < N as Self::Index {
             Some(unsafe { self.get_transmute_unchecked(index) })
         } else {
             None
@@ -209,7 +183,7 @@ where
 
     #[inline(always)]
     fn get_transmute_mut<V>(&mut self, index: Self::Index) -> Option<&mut V> {
-        if index < N::USIZE as Self::Index {
+        if index < N as Self::Index {
             Some(unsafe { self.get_transmute_mut_unchecked(index) })
         } else {
             None
@@ -217,10 +191,7 @@ where
     }
 }
 
-impl<T, N> GetTransmuteUnchecked for Cursor<T, N>
-where
-    N: ArrayLength,
-{
+impl<T, const N: usize> GetTransmuteUnchecked for Cursor<T, N> {
     #[inline(always)]
     unsafe fn get_transmute_unchecked<V>(&self, index: Self::Index) -> &V {
         let value = self as *const Self as *const u8;
@@ -248,12 +219,9 @@ const fn calc_index_from_input_size_and_unit_isze<T, V>() -> usize {
     }
 }
 
-impl<T, N> PushTransmute for Cursor<T, N>
-where
-    N: ArrayLength,
-{
+impl<T, const N: usize> PushTransmute for Cursor<T, N> {
     fn push_transmute<V>(&mut self, value: V) -> Result<(), ()> {
-        if size_of::<V>() + self.filled_len < N::USIZE {
+        if size_of::<V>() + self.filled_len < N {
             Ok(unsafe { self.push_transmute_unchecked(value) })
         } else {
             Err(())
@@ -261,10 +229,9 @@ where
     }
 }
 
-impl<T, V, N> PushTransmuteUnchecked<V> for Cursor<T, N>
+impl<T, V, const N: usize> PushTransmuteUnchecked<V> for Cursor<T, N>
 where
     T: Sized,
-    N: ArrayLength,
 {
     unsafe fn push_transmute_unchecked(&mut self, value: V) {
         const { assert_types::<T, V>() };
@@ -276,10 +243,7 @@ where
     }
 }
 
-impl<N> CursorReadTransmute for Cursor<u8, N>
-where
-    N: ArrayLength,
-{
+impl<const N: usize> CursorReadTransmute for Cursor<u8, N> {
     #[inline(always)]
     fn read_transmute<T>(&mut self) -> Option<&T> {
         if self.pos() + core::mem::size_of::<T>() > self.filled_len() {
@@ -298,17 +262,11 @@ where
     }
 }
 
-impl<T, N> Index for Cursor<T, N>
-where
-    N: ArrayLength,
-{
+impl<T, const N: usize> Index for Cursor<T, N> {
     type Index = usize;
 }
 
-impl<T, N> GetUnchecked<T> for Cursor<T, N>
-where
-    N: ArrayLength,
-{
+impl<T, const N: usize> GetUnchecked<T> for Cursor<T, N> {
     #[inline(always)]
     unsafe fn get_unchecked(&self, index: Self::Index) -> &T {
         self.buffer.get_unchecked(index).assume_init_ref()
@@ -320,12 +278,9 @@ where
     }
 }
 
-impl<T, N> SetTransmute for Cursor<T, N>
-where
-    N: ArrayLength,
-{
+impl<T, const N: usize> SetTransmute for Cursor<T, N> {
     fn set_transmute<V>(&mut self, index: usize, value: V) -> Result<(), ()> {
-        if index + core::mem::size_of::<V>() < N::USIZE {
+        if index + core::mem::size_of::<V>() < N {
             unsafe { Ok(self.set_transmute_unchecked(index, value)) }
         } else {
             Err(())
@@ -339,14 +294,10 @@ where
     }
 }
 
-impl<T: Copy, N> Clone for Cursor<T, N>
-where
-    N: ArrayLength,
-    [(); N::USIZE]:,
-{
+impl<T: Copy, const N: usize> Clone for Cursor<T, N> {
     fn clone(&self) -> Self {
         let mut cursor = Self {
-            buffer: GenericArray::uninit(),
+            buffer: [MaybeUninit::uninit(); N],
             pos: self.pos.clone(),
             filled_len: self.filled_len.clone(),
         };
@@ -360,12 +311,11 @@ mod test {
     use crate::{const_transmute_unchecked, CursorRead, CursorReadTransmute, Push, PushTransmute};
 
     use super::Cursor;
-    use generic_array::typenum::{U100, U8};
     use rand::Rng;
 
     #[test]
     fn test() {
-        let mut buffer: Cursor<u8, U100> = Cursor::new();
+        let mut buffer: Cursor<u8, 100> = Cursor::new();
         for i in 1..5 {
             buffer.push(i).unwrap();
         }
@@ -383,7 +333,7 @@ mod test {
 
     #[test]
     fn filled() {
-        let mut buffer: Cursor<u8, U8> = Cursor::new();
+        let mut buffer: Cursor<u8, 8> = Cursor::new();
         for i in 1..9 {
             buffer.push(i).unwrap();
         }
@@ -401,7 +351,7 @@ mod test {
 
     #[test]
     fn test_cursor_push() {
-        let mut cursor: Cursor<u8, U100> = Cursor::new();
+        let mut cursor: Cursor<u8, 100> = Cursor::new();
         let value: [u8; 2] = unsafe { const_transmute_unchecked(100u16) };
         cursor.push_transmute(260u16).unwrap();
         assert_eq!(cursor.filled_len(), 2);
@@ -410,8 +360,8 @@ mod test {
 
     #[test]
     fn test_cursor_copy_from_cursor() {
-        let mut dst: Cursor<u8, U100> = Cursor::new();
-        let mut src: Cursor<u8, U100> = Cursor::new();
+        let mut dst: Cursor<u8, 100> = Cursor::new();
+        let mut src: Cursor<u8, 100> = Cursor::new();
         let value: usize = rand::thread_rng().gen();
         src.push_transmute(value).unwrap();
         dst.push_from_cursor(&mut src).unwrap();

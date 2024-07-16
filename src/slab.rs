@@ -1,11 +1,9 @@
 use std::marker::PhantomData;
 
-use generic_array::ArrayLength;
-
 use crate::{Clear, Get, GetUnchecked, Index, Pop, Push, RemoveUnchecked, Vec};
 
 ///Simply store element fast without any other features like get length, and iteration.
-pub struct Slab<I, T, N: ArrayLength> {
+pub struct Slab<I, T, const N: usize> {
     chunk: Vec<T, N>,
     spares: Vec<usize, N>,
     item_ptrs: Vec<usize, N>,
@@ -15,10 +13,9 @@ pub struct Slab<I, T, N: ArrayLength> {
 pub auto trait NotCloneAndCopy {}
 impl<T: Clone + Copy> !NotCloneAndCopy for T {}
 
-impl<I, T, N> Get<T> for Slab<I, T, N>
+impl<I, T, const N: usize> Get<T> for Slab<I, T, N>
 where
     I: Into<usize> + NotCloneAndCopy,
-    N: ArrayLength,
 {
     fn get(&self, index: Self::Index) -> Option<&T> {
         Some(unsafe { self.get_unchecked(index) })
@@ -29,10 +26,7 @@ where
     }
 }
 
-impl<I, T, N> Default for Slab<I, T, N>
-where
-    N: ArrayLength,
-{
+impl<I, T, const N: usize> Default for Slab<I, T, N> {
     fn default() -> Self {
         Self {
             chunk: Default::default(),
@@ -43,17 +37,16 @@ where
     }
 }
 
-impl<I, T, N: ArrayLength> Index for Slab<I, T, N>
+impl<I, T, const N: usize> Index for Slab<I, T, N>
 where
     I: Into<usize>,
 {
     type Index = I;
 }
 
-impl<I, T, N> GetUnchecked<T> for Slab<I, T, N>
+impl<I, T, const N: usize> GetUnchecked<T> for Slab<I, T, N>
 where
     I: Into<usize>,
-    N: ArrayLength,
 {
     ///After removing an element, be cautious as you might still unintentionally access it using [Self::get_unchecked_mut].
     unsafe fn get_unchecked_mut(&mut self, index: Self::Index) -> &mut T {
@@ -65,30 +58,25 @@ where
     }
 }
 
-impl<I, T, N> Clear for Slab<I, T, N>
-where
-    N: ArrayLength,
-{
+impl<I, T, const N: usize> Clear for Slab<I, T, N> {
     fn clear(&mut self) {
         self.chunk.clear();
         self.spares.clear();
     }
 }
 
-impl<I, T, N> RemoveUnchecked for Slab<I, T, N>
+impl<I, T, const N: usize> RemoveUnchecked for Slab<I, T, N>
 where
     I: Into<usize>,
-    N: ArrayLength,
 {
     unsafe fn remove_unchecked(&mut self, index: Self::Index) {
         self.spares.push_unchecked(index.into());
     }
 }
 
-impl<I, T, N> Slab<I, T, N>
+impl<I, T, const N: usize> Slab<I, T, N>
 where
     I: Into<usize>,
-    N: ArrayLength,
 {
     pub fn new() -> Slab<I, T, N> {
         Slab {
@@ -106,7 +94,7 @@ where
     {
         if self.spares.len() == 0 {
             let index = self.chunk.len();
-            if index == N::USIZE {
+            if index == N {
                 return Err(());
             }
             let elem = f(index);
@@ -126,7 +114,6 @@ mod test {
     use crate::{Get, GetUnchecked, NotCloneAndCopy};
 
     use super::Slab;
-    use generic_array::typenum::U100;
 
     #[test]
     fn test() {
@@ -135,7 +122,7 @@ mod test {
             inner: usize,
             index: usize,
         }
-        let mut value = Slab::<usize, A, U100>::new();
+        let mut value = Slab::<usize, A, 100>::new();
         value
             .add_with_index(|index| A { inner: 123, index })
             .unwrap();
@@ -167,7 +154,7 @@ mod test {
                 self.0
             }
         }
-        let slab: Slab<Id, bool, U100> = Slab::new();
+        let slab: Slab<Id, bool, 100> = Slab::new();
         let value = slab.get(Id(0));
     }
 }
