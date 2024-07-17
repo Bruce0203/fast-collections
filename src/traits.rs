@@ -1,4 +1,4 @@
-pub trait Index {
+pub trait Index<'a> {
     type Index: Into<usize>;
 }
 
@@ -10,12 +10,12 @@ pub trait Pop<T> {
     unsafe fn pop_unchecked_mut(&mut self) -> &mut T;
 }
 
-pub trait Get<T>: Index {
+pub trait Get<'a, T>: Index<'a> {
     fn get(&self, index: Self::Index) -> Option<&T>;
     fn get_mut(&mut self, index: Self::Index) -> Option<&mut T>;
 }
 
-pub trait GetUnchecked<T>: Index {
+pub trait GetUnchecked<'a, T>: Index<'a> {
     unsafe fn get_unchecked(&self, index: Self::Index) -> &T;
     unsafe fn get_unchecked_mut(&mut self, index: Self::Index) -> &mut T;
 }
@@ -25,11 +25,11 @@ pub trait Push<T> {
     unsafe fn push_unchecked(&mut self, value: T);
 }
 
-pub trait Remove: Index {
+pub trait Remove<'a>: Index<'a> {
     fn remove(&mut self, index: Self::Index) -> bool;
 }
 
-pub trait RemoveUnchecked: Index {
+pub trait RemoveUnchecked<'a>: Index<'a> {
     unsafe fn remove_unchecked(&mut self, index: Self::Index);
 }
 
@@ -53,12 +53,12 @@ pub trait Clear {
     fn clear(&mut self);
 }
 
-pub trait GetTransmute: Index {
+pub trait GetTransmute<'a>: Index<'a> {
     fn get_transmute<V>(&self, index: Self::Index) -> Option<&V>;
     fn get_transmute_mut<V>(&mut self, index: Self::Index) -> Option<&mut V>;
 }
 
-pub trait GetTransmuteUnchecked: Index {
+pub trait GetTransmuteUnchecked<'a>: Index<'a> {
     unsafe fn get_transmute_unchecked<V>(&self, index: Self::Index) -> &V;
     unsafe fn get_transmute_mut_unchecked<V>(&mut self, index: Self::Index) -> &mut V;
 }

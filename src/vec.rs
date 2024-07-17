@@ -169,7 +169,7 @@ impl<T, const N: usize> Clear for Vec<T, N> {
     }
 }
 
-impl<T, const N: usize> Index for Vec<T, N> {
+impl<'a, T, const N: usize> Index<'a> for Vec<T, N> {
     type Index = usize;
 }
 
@@ -200,7 +200,7 @@ impl<T, const N: usize> Push<T> for Vec<T, N> {
     }
 }
 
-impl<T, const N: usize> GetUnchecked<T> for Vec<T, N> {
+impl<'a, T, const N: usize> GetUnchecked<'a, T> for Vec<T, N> {
     unsafe fn get_unchecked(&self, index: usize) -> &T {
         self.data.get_unchecked(index).assume_init_ref()
     }
@@ -211,7 +211,7 @@ impl<T, const N: usize> GetUnchecked<T> for Vec<T, N> {
     }
 }
 
-impl<T, const N: usize> GetTransmuteUnchecked for Vec<T, N> {
+impl<'a, T, const N: usize> GetTransmuteUnchecked<'a> for Vec<T, N> {
     #[inline(always)]
     unsafe fn get_transmute_unchecked<V>(&self, index: Self::Index) -> &V {
         let value = self as *const Self as *const T;
@@ -225,7 +225,7 @@ impl<T, const N: usize> GetTransmuteUnchecked for Vec<T, N> {
     }
 }
 
-impl<T, const N: usize> Get<T> for Vec<T, N> {
+impl<'a, T, const N: usize> Get<'a, T> for Vec<T, N> {
     fn get(&self, index: usize) -> Option<&T> {
         if N > index {
             Some(unsafe { self.get_unchecked(index) })

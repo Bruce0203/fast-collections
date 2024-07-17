@@ -7,7 +7,6 @@ use core::{
     mem::{size_of, MaybeUninit},
     slice::from_raw_parts,
 };
-use std::fs::write;
 
 #[repr(C)]
 pub struct Cursor<T, const N: usize> {
@@ -172,7 +171,7 @@ impl<T, const N: usize> CursorRead<T> for Cursor<T, N> {
     }
 }
 
-impl<T, const N: usize> GetTransmute for Cursor<T, N> {
+impl<'a, T, const N: usize> GetTransmute<'a> for Cursor<T, N> {
     #[inline(always)]
     fn get_transmute<V>(&self, index: Self::Index) -> Option<&V> {
         if index < N as Self::Index {
@@ -192,7 +191,7 @@ impl<T, const N: usize> GetTransmute for Cursor<T, N> {
     }
 }
 
-impl<T, const N: usize> GetTransmuteUnchecked for Cursor<T, N> {
+impl<'a, T, const N: usize> GetTransmuteUnchecked<'a> for Cursor<T, N> {
     #[inline(always)]
     unsafe fn get_transmute_unchecked<V>(&self, index: Self::Index) -> &V {
         let value = self as *const Self as *const u8;
@@ -263,11 +262,11 @@ impl<const N: usize> CursorReadTransmute for Cursor<u8, N> {
     }
 }
 
-impl<T, const N: usize> Index for Cursor<T, N> {
+impl<'a, T, const N: usize> Index<'a> for Cursor<T, N> {
     type Index = usize;
 }
 
-impl<T, const N: usize> GetUnchecked<T> for Cursor<T, N> {
+impl<'a, T, const N: usize> GetUnchecked<'a, T> for Cursor<T, N> {
     #[inline(always)]
     unsafe fn get_unchecked(&self, index: Self::Index) -> &T {
         self.buffer.get_unchecked(index).assume_init_ref()
