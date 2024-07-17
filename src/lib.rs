@@ -40,4 +40,3 @@ pub(crate) const fn min(value: usize, value2: usize) -> usize {
         value2
     }
 }
-

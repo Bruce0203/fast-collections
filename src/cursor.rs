@@ -7,6 +7,7 @@ use core::{
     mem::{size_of, MaybeUninit},
     slice::from_raw_parts,
 };
+use std::fs::write;
 
 #[repr(C)]
 pub struct Cursor<T, const N: usize> {
@@ -312,6 +313,12 @@ impl<const N: usize> Cursor<u8, N> {
         let unfilled = unsafe { self.unfilled_mut() };
         let read_length = read.read(unfilled)?;
         unsafe { *self.filled_len_mut() += read_length };
+        Ok(())
+    }
+
+    pub fn push_to_write<W: std::io::Write>(&mut self, write: &mut W) -> std::io::Result<()> {
+        write.write_all(self.filled())?;
+        self.clear();
         Ok(())
     }
 }
