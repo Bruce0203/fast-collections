@@ -7,3 +7,8 @@ fn test() {
     }
 }
 
+struct A(B);
+struct B;
+fn a<'a: 'b, 'b>(a: &'a mut A) -> &'b B {
+    &a.0
+}
