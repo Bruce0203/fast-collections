@@ -72,12 +72,6 @@ where
     }
 }
 
-pub trait AddWithIndex<T> {
-    fn add_with_index<F>(&mut self, f: F) -> Result<usize, ()>
-    where
-        F: FnOnce(&usize) -> T;
-}
-
 impl<'a, I, T, const N: usize> AddWithIndex<T> for Slab<I, T, N>
 where
     &'a I: Into<usize> + 'a,

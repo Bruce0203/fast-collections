@@ -2,6 +2,12 @@ pub trait Index<'a> {
     type Index: Into<usize>;
 }
 
+pub trait AddWithIndex<T> {
+    fn add_with_index<F>(&mut self, f: F) -> Result<usize, ()>
+    where
+        F: FnOnce(&usize) -> T;
+}
+
 pub trait Pop<T> {
     fn pop(&mut self) -> Option<&T>;
     unsafe fn pop_unchecked(&mut self) -> &T;
