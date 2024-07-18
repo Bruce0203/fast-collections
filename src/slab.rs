@@ -72,20 +72,18 @@ where
     }
 }
 
-impl<'a, I, T, const N: usize> Slab<I, T, N>
+pub trait AddWithIndex<T> {
+    fn add_with_index<F>(&mut self, f: F) -> Result<usize, ()>
+    where
+        F: FnOnce(&usize) -> T;
+}
+
+impl<'a, I, T, const N: usize> AddWithIndex<T> for Slab<I, T, N>
 where
     &'a I: Into<usize> + 'a,
 {
-    pub fn new() -> Slab<I, T, N> {
-        Slab {
-            chunk: Vec::uninit(),
-            spares: Vec::uninit(),
-            _marker: PhantomData,
-        }
-    }
-
     #[inline(always)]
-    pub fn add_with_index<F>(&mut self, f: F) -> Result<usize, ()>
+    fn add_with_index<F>(&mut self, f: F) -> Result<usize, ()>
     where
         F: FnOnce(&usize) -> T,
     {
@@ -106,9 +104,22 @@ where
     }
 }
 
+impl<'a, I, T, const N: usize> Slab<I, T, N>
+where
+    &'a I: Into<usize> + 'a,
+{
+    pub fn new() -> Slab<I, T, N> {
+        Slab {
+            chunk: Vec::uninit(),
+            spares: Vec::uninit(),
+            _marker: PhantomData,
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
-    use crate::{Get, GetUnchecked, NotCloneAndCopy};
+    use crate::{AddWithIndex, Get, GetUnchecked, NotCloneAndCopy};
 
     use super::Slab;
 
