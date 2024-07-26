@@ -3,7 +3,7 @@ use std::fmt::Debug;
 
 use crate::{
     const_transmute_unchecked, min, Cap, Clear, Get, GetTransmuteUnchecked, GetUnchecked, Index,
-    Pop, Push,
+    Pop, Push, SwapRemove,
 };
 
 #[repr(C)]
@@ -102,7 +102,7 @@ impl<T, const N: usize> Vec<T, N> {
     pub const fn from_array<const L: usize>(array: [T; L]) -> Self {
         let value: [MaybeUninit<T>; N] = unsafe { const_transmute_unchecked(array) };
         Self {
-            data: [const { MaybeUninit::uninit() }; N],
+            data: value,
             len: const { min(N, L) },
         }
     }
@@ -273,6 +273,30 @@ impl<T, const N: usize> Pop<T> for Vec<T, N> {
     }
 }
 
+impl<T, const N: usize> SwapRemove for Vec<T, N>
+where
+    [(); core::mem::size_of::<T>()]:,
+{
+    fn swap_remove(&mut self, index: usize) -> Result<(), ()> {
+        if index < N {
+            unsafe { self.swap_remove_unchecked(index) };
+            Ok(())
+        } else {
+            Err(())
+        }
+    }
+
+    unsafe fn swap_remove_unchecked(&mut self, index: usize) {
+        let new_len = self.len - 1;
+        *self.len_mut() = new_len;
+        let last_ele = self.get_unchecked_mut(new_len);
+        let last_ele: &[u8; core::mem::size_of::<T>()] = const_transmute_unchecked(last_ele);
+        let last_ele = *last_ele;
+        let last_ele: T = const_transmute_unchecked(last_ele);
+        *self.get_unchecked_mut(index) = last_ele;
+    }
+}
+
 impl<T: Copy, const N: usize> Clone for Vec<T, N> {
     fn clone(&self) -> Self {
         let mut vec = Self {
@@ -286,15 +310,71 @@ impl<T: Copy, const N: usize> Clone for Vec<T, N> {
 
 #[cfg(test)]
 mod test {
-    use crate::{Push, Vec};
+    use crate::{Get, Push, SwapRemove, Vec};
 
     #[test]
     fn iter() {
         let mut vec = Vec::<u8, 10>::uninit();
-        vec.push(1);
-        vec.push(2);
+        vec.push(1).unwrap();
+        vec.push(2).unwrap();
         assert_eq!(2usize, vec.iter().count());
         assert_eq!(2u8, *vec.iter_mut().last().unwrap());
         println!("{:?}", vec);
+    }
+
+    #[test]
+    fn swap_remove() {
+        {
+            let mut vec = Vec::<u8, 10>::uninit();
+            vec.push(1).unwrap();
+            vec.push(2).unwrap();
+            vec.push(3).unwrap();
+            vec.swap_remove(0).unwrap();
+            assert_eq!(vec.get(0).unwrap(), &3);
+            assert_eq!(vec.get(1).unwrap(), &2);
+            assert_eq!(vec.len(), 2);
+        }
+        {
+            let mut vec = Vec::<u8, 10>::uninit();
+            vec.push(1).unwrap();
+            vec.push(2).unwrap();
+            vec.push(3).unwrap();
+            vec.swap_remove(1).unwrap();
+            assert_eq!(vec.get(0).unwrap(), &1);
+            assert_eq!(vec.get(1).unwrap(), &3);
+            assert_eq!(vec.len(), 2);
+        }
+        {
+            let mut vec = Vec::<u8, 10>::uninit();
+            vec.push(1).unwrap();
+            vec.push(2).unwrap();
+            vec.push(3).unwrap();
+            vec.swap_remove(2).unwrap();
+            assert_eq!(vec.get(0).unwrap(), &1);
+            assert_eq!(vec.get(1).unwrap(), &2);
+            assert_eq!(vec.len(), 2);
+        }
+        {
+            let mut vec = Vec::<u8, 10>::uninit();
+            vec.push(1).unwrap();
+            vec.push(2).unwrap();
+            vec.swap_remove(0).unwrap();
+            assert_eq!(vec.get(0).unwrap(), &2);
+            assert_eq!(vec.len(), 1);
+        }
+        {
+            let mut vec = Vec::<u8, 10>::uninit();
+            vec.push(1).unwrap();
+            vec.push(2).unwrap();
+            vec.swap_remove(1).unwrap();
+            assert_eq!(vec.get(0).unwrap(), &1);
+            assert_eq!(vec.len(), 1);
+        }
+        {
+            let mut vec = Vec::<u8, 10>::uninit();
+            vec.push(1).unwrap();
+            vec.swap_remove(0).unwrap();
+            assert_eq!(vec.len(), 0);
+        }
     }
 }
