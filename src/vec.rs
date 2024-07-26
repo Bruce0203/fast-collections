@@ -144,7 +144,7 @@ impl<T, const N: usize> Vec<T, N> {
         unsafe { const_transmute_unchecked(&mut self.data) }
     }
 
-    pub fn iter<'a>(&'a mut self) -> VecIter<'a, T, N> {
+    pub fn iter<'a>(&'a self) -> VecIter<'a, T, N> {
         VecIter {
             vec: self,
             index: 0,
