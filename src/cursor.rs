@@ -1,63 +1,15 @@
-use crate::{
-    const_transmute_unchecked, Cap, Clear, CursorRead, CursorReadTransmute, GetTransmute,
-    GetTransmuteUnchecked, GetUnchecked, Index, Push, PushTransmute, PushTransmuteUnchecked,
-    SetTransmute,
-};
 use core::{
     mem::{size_of, MaybeUninit},
     slice::from_raw_parts,
 };
+
+use crate::const_transmute_unchecked;
 
 #[repr(C)]
 pub struct Cursor<T, const N: usize> {
     buffer: [MaybeUninit<T>; N],
     pos: usize,
     filled_len: usize,
-}
-
-impl<T, const N: usize> Default for Cursor<T, N> {
-    #[inline(always)]
-    fn default() -> Self {
-        Self {
-            buffer: [const { MaybeUninit::uninit() }; N],
-            pos: Default::default(),
-            filled_len: Default::default(),
-        }
-    }
-}
-
-impl<T, const N: usize> Push<T> for Cursor<T, N> {
-    #[inline(always)]
-    fn push(&mut self, item: T) -> Result<(), T> {
-        if self.filled_len < self.capacity() {
-            Ok(unsafe { self.push_unchecked(item) })
-        } else {
-            Err(item)
-        }
-    }
-
-    #[inline(always)]
-    unsafe fn push_unchecked(&mut self, item: T) {
-        *unsafe { self.buffer.get_unchecked_mut(self.filled_len) } = MaybeUninit::new(item);
-        self.filled_len = self.filled_len.unchecked_add(1);
-    }
-}
-
-impl<T, const N: usize> Clear for Cursor<T, N> {
-    #[inline(always)]
-    fn clear(&mut self) {
-        self.filled_len = 0;
-        self.pos = 0;
-    }
-}
-
-impl<T, const N: usize> Cap for Cursor<T, N> {
-    type Cap = usize;
-
-    #[inline(always)]
-    fn capacity(&self) -> usize {
-        N
-    }
 }
 
 impl<const N: usize> Cursor<u8, N> {
@@ -90,6 +42,60 @@ impl<T, const N: usize> Cursor<T, N> {
             pos: 0,
             filled_len: 0,
         }
+    }
+
+    #[inline(always)]
+    pub fn clear(&mut self) {
+        self.filled_len = 0;
+        self.pos = 0;
+    }
+
+    #[inline(always)]
+    pub const fn as_array(&mut self) -> &mut [T; N] {
+        unsafe { const_transmute_unchecked(self) }
+    }
+
+    #[inline(always)]
+    pub const fn remaining(&self) -> usize {
+        self.filled_len - self.pos
+    }
+
+    #[inline(always)]
+    pub fn capacity(&self) -> usize {
+        N
+    }
+
+    #[inline(always)]
+    pub fn push(&mut self, item: T) -> Result<(), T> {
+        if self.filled_len < self.capacity() {
+            Ok(unsafe { self.push_unchecked(item) })
+        } else {
+            Err(item)
+        }
+    }
+
+    #[inline(always)]
+    pub unsafe fn push_unchecked(&mut self, item: T) {
+        *unsafe { self.buffer.get_unchecked_mut(self.filled_len) } = MaybeUninit::new(item);
+        self.filled_len = self.filled_len.unchecked_add(1);
+    }
+
+    #[inline(always)]
+    pub fn read(&mut self) -> Option<&T> {
+        let pos = self.pos().clone();
+        if pos < self.filled_len {
+            unsafe { *self.pos_mut() = pos.unchecked_add(1) };
+            self.buffer.get(pos).map(|v| unsafe { v.assume_init_ref() })
+        } else {
+            None
+        }
+    }
+
+    #[inline(always)]
+    pub unsafe fn read_unchecked(&mut self) -> &T {
+        let pos = self.pos().clone();
+        *self.pos_mut() = pos.unchecked_add(1);
+        self.buffer.get_unchecked(pos).assume_init_ref()
     }
 
     #[inline(always)]
@@ -141,40 +147,8 @@ impl<T, const N: usize> Cursor<T, N> {
     }
 
     #[inline(always)]
-    pub const fn as_array(&mut self) -> &mut [T; N] {
-        unsafe { const_transmute_unchecked(self) }
-    }
-
-    #[inline(always)]
-    pub const fn remaining(&self) -> usize {
-        self.filled_len - self.pos
-    }
-}
-
-impl<T, const N: usize> CursorRead<T> for Cursor<T, N> {
-    #[inline(always)]
-    fn read(&mut self) -> Option<&T> {
-        let pos = self.pos().clone();
-        if pos < self.filled_len {
-            unsafe { *self.pos_mut() = pos.unchecked_add(1) };
-            self.buffer.get(pos).map(|v| unsafe { v.assume_init_ref() })
-        } else {
-            None
-        }
-    }
-
-    #[inline(always)]
-    unsafe fn read_unchecked(&mut self) -> &T {
-        let pos = self.pos().clone();
-        *self.pos_mut() = pos.unchecked_add(1);
-        self.buffer.get_unchecked(pos).assume_init_ref()
-    }
-}
-
-impl<'a, T, const N: usize> GetTransmute<'a> for Cursor<T, N> {
-    #[inline(always)]
-    fn get_transmute<V>(&self, index: Self::Index) -> Option<&V> {
-        if index < N as Self::Index {
+    pub fn get_transmute<V>(&self, index: usize) -> Option<&V> {
+        if index < N as usize {
             Some(unsafe { self.get_transmute_unchecked(index) })
         } else {
             None
@@ -182,26 +156,99 @@ impl<'a, T, const N: usize> GetTransmute<'a> for Cursor<T, N> {
     }
 
     #[inline(always)]
-    fn get_transmute_mut<V>(&mut self, index: Self::Index) -> Option<&mut V> {
-        if index < N as Self::Index {
+    pub fn get_transmute_mut<V>(&mut self, index: usize) -> Option<&mut V> {
+        if index < N as usize {
             Some(unsafe { self.get_transmute_mut_unchecked(index) })
         } else {
             None
         }
     }
-}
 
-impl<'a, T, const N: usize> GetTransmuteUnchecked<'a> for Cursor<T, N> {
     #[inline(always)]
-    unsafe fn get_transmute_unchecked<V>(&self, index: Self::Index) -> &V {
+    pub unsafe fn get_transmute_unchecked<V>(&self, index: usize) -> &V {
         let value = self as *const Self as *const u8;
         &*value.offset(index as isize).cast::<V>()
     }
 
     #[inline(always)]
-    unsafe fn get_transmute_mut_unchecked<V>(&mut self, index: Self::Index) -> &mut V {
+    pub unsafe fn get_transmute_mut_unchecked<V>(&mut self, index: usize) -> &mut V {
         let value = self as *mut Self as *mut u8;
         &mut *value.offset(index as isize).cast::<V>()
+    }
+
+    pub fn push_transmute<V>(&mut self, value: V) -> Result<(), ()> {
+        if size_of::<V>() + self.filled_len < N {
+            Ok(unsafe { self.push_transmute_unchecked(value) })
+        } else {
+            Err(())
+        }
+    }
+
+    pub unsafe fn push_transmute_unchecked<V>(&mut self, value: V) {
+        const { assert_types::<T, V>() };
+        let ptr = self as *mut Self as *mut u8;
+        *ptr.offset(self.filled_len as isize).cast::<V>() = value;
+        *self.filled_len_mut() = self
+            .filled_len
+            .unchecked_add(const { calc_index_from_input_size_and_unit_isze::<T, V>() });
+    }
+
+    #[inline(always)]
+    pub fn read_transmute<V>(&mut self) -> Option<&V> {
+        if self.pos() + core::mem::size_of::<V>() > self.filled_len() {
+            None
+        } else {
+            Some(unsafe { self.read_transmute_unchecked() })
+        }
+    }
+
+    #[inline(always)]
+    pub unsafe fn read_transmute_unchecked<V>(&mut self) -> &V {
+        let value = self as *const Self as *const u8;
+        let result = &*value.offset(self.pos as isize).cast::<V>();
+        *self.pos_mut() = self.pos.unchecked_add(core::mem::size_of::<V>());
+        result
+    }
+
+    #[inline(always)]
+    pub unsafe fn get_unchecked(&self, index: usize) -> &T {
+        self.buffer.get_unchecked(index).assume_init_ref()
+    }
+
+    #[inline(always)]
+    pub unsafe fn get_unchecked_mut(&mut self, index: usize) -> &mut T {
+        self.buffer.get_unchecked_mut(index).assume_init_mut()
+    }
+
+    pub fn set_transmute<V>(&mut self, index: usize, value: V) -> Result<(), ()> {
+        if index + core::mem::size_of::<V>() < N {
+            unsafe { Ok(self.set_transmute_unchecked(index, value)) }
+        } else {
+            Err(())
+        }
+    }
+
+    pub unsafe fn set_transmute_unchecked<V>(&mut self, index: usize, value: V) {
+        const { assert_types::<T, V>() };
+        let ptr = self as *mut Self as *mut u8;
+        *ptr.offset(index as isize).cast::<V>() = value;
+    }
+}
+
+impl<const N: usize> Cursor<u8, N> {
+    #[cfg(feature = "std")]
+    pub fn push_from_read<R: std::io::Read>(&mut self, read: &mut R) -> std::io::Result<()> {
+        let unfilled = unsafe { self.unfilled_mut() };
+        let read_length = read.read(unfilled)?;
+        unsafe { *self.filled_len_mut() += read_length };
+        Ok(())
+    }
+
+    #[cfg(feature = "std")]
+    pub fn push_to_write<W: std::io::Write>(&mut self, write: &mut W) -> std::io::Result<()> {
+        write.write_all(self.filled())?;
+        self.clear();
+        Ok(())
     }
 }
 
@@ -219,81 +266,6 @@ const fn calc_index_from_input_size_and_unit_isze<T, V>() -> usize {
     }
 }
 
-impl<T, const N: usize> PushTransmute for Cursor<T, N> {
-    fn push_transmute<V>(&mut self, value: V) -> Result<(), ()> {
-        if size_of::<V>() + self.filled_len < N {
-            Ok(unsafe { self.push_transmute_unchecked(value) })
-        } else {
-            Err(())
-        }
-    }
-}
-
-impl<T, V, const N: usize> PushTransmuteUnchecked<V> for Cursor<T, N>
-where
-    T: Sized,
-{
-    unsafe fn push_transmute_unchecked(&mut self, value: V) {
-        const { assert_types::<T, V>() };
-        let ptr = self as *mut Self as *mut u8;
-        *ptr.offset(self.filled_len as isize).cast::<V>() = value;
-        *self.filled_len_mut() = self
-            .filled_len
-            .unchecked_add(const { calc_index_from_input_size_and_unit_isze::<T, V>() });
-    }
-}
-
-impl<const N: usize> CursorReadTransmute for Cursor<u8, N> {
-    #[inline(always)]
-    fn read_transmute<T>(&mut self) -> Option<&T> {
-        if self.pos() + core::mem::size_of::<T>() > self.filled_len() {
-            None
-        } else {
-            Some(unsafe { self.read_transmute_unchecked() })
-        }
-    }
-
-    #[inline(always)]
-    unsafe fn read_transmute_unchecked<T>(&mut self) -> &T {
-        let value = self as *const Self as *const u8;
-        let result = &*value.offset(self.pos as isize).cast::<T>();
-        *self.pos_mut() = self.pos.unchecked_add(core::mem::size_of::<T>());
-        result
-    }
-}
-
-impl<'a, T, const N: usize> Index<'a> for Cursor<T, N> {
-    type Index = usize;
-}
-
-impl<'a, T, const N: usize> GetUnchecked<'a, T> for Cursor<T, N> {
-    #[inline(always)]
-    unsafe fn get_unchecked(&self, index: Self::Index) -> &T {
-        self.buffer.get_unchecked(index).assume_init_ref()
-    }
-
-    #[inline(always)]
-    unsafe fn get_unchecked_mut(&mut self, index: Self::Index) -> &mut T {
-        self.buffer.get_unchecked_mut(index).assume_init_mut()
-    }
-}
-
-impl<T, const N: usize> SetTransmute for Cursor<T, N> {
-    fn set_transmute<V>(&mut self, index: usize, value: V) -> Result<(), ()> {
-        if index + core::mem::size_of::<V>() < N {
-            unsafe { Ok(self.set_transmute_unchecked(index, value)) }
-        } else {
-            Err(())
-        }
-    }
-
-    unsafe fn set_transmute_unchecked<V>(&mut self, index: usize, value: V) {
-        const { assert_types::<T, V>() };
-        let ptr = self as *mut Self as *mut u8;
-        *ptr.offset(index as isize).cast::<V>() = value;
-    }
-}
-
 impl<T: Copy, const N: usize> Clone for Cursor<T, N> {
     fn clone(&self) -> Self {
         let mut cursor = Self {
@@ -306,25 +278,20 @@ impl<T: Copy, const N: usize> Clone for Cursor<T, N> {
     }
 }
 
-#[cfg(feature = "std")]
-impl<const N: usize> Cursor<u8, N> {
-    pub fn push_from_read<R: std::io::Read>(&mut self, read: &mut R) -> std::io::Result<()> {
-        let unfilled = unsafe { self.unfilled_mut() };
-        let read_length = read.read(unfilled)?;
-        unsafe { *self.filled_len_mut() += read_length };
-        Ok(())
-    }
-
-    pub fn push_to_write<W: std::io::Write>(&mut self, write: &mut W) -> std::io::Result<()> {
-        write.write_all(self.filled())?;
-        self.clear();
-        Ok(())
+impl<T, const N: usize> Default for Cursor<T, N> {
+    #[inline(always)]
+    fn default() -> Self {
+        Self {
+            buffer: [const { MaybeUninit::uninit() }; N],
+            pos: Default::default(),
+            filled_len: Default::default(),
+        }
     }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::{const_transmute_unchecked, CursorRead, CursorReadTransmute, Push, PushTransmute};
+    use crate::const_transmute_unchecked;
 
     use super::Cursor;
     use rand::Rng;

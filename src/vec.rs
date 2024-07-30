@@ -1,10 +1,7 @@
 use core::mem::MaybeUninit;
 use std::fmt::Debug;
 
-use crate::{
-    const_transmute_unchecked, min, Cap, Clear, Get, GetTransmuteUnchecked, GetUnchecked, Index,
-    Pop, Push, SwapRemove,
-};
+use crate::{const_transmute_unchecked, min};
 
 #[repr(C)]
 pub struct Vec<T, const N: usize> {
@@ -161,28 +158,15 @@ impl<T, const N: usize> Vec<T, N> {
     const fn is_empty(&self) -> bool {
         self.len == 0
     }
-}
 
-impl<T, const N: usize> Clear for Vec<T, N> {
-    fn clear(&mut self) {
+    pub const fn clear(&mut self) {
         self.len = 0;
     }
-}
-
-impl<'a, T, const N: usize> Index<'a> for Vec<T, N> {
-    type Index = usize;
-}
-
-impl<T, const N: usize> Cap for Vec<T, N> {
-    type Cap = usize;
-
-    fn capacity(&self) -> Self::Cap {
+    pub const fn capacity(&self) -> usize {
         N
     }
-}
 
-impl<T, const N: usize> Push<T> for Vec<T, N> {
-    fn push(&mut self, value: T) -> Result<(), T> {
+    pub fn push(&mut self, value: T) -> Result<(), T> {
         if N > self.len {
             unsafe {
                 self.push_unchecked(value);
@@ -194,39 +178,33 @@ impl<T, const N: usize> Push<T> for Vec<T, N> {
     }
 
     #[inline(always)]
-    unsafe fn push_unchecked(&mut self, value: T) {
+    pub unsafe fn push_unchecked(&mut self, value: T) {
         *self.data.get_unchecked_mut(self.len) = MaybeUninit::new(value);
         self.len = self.len.unchecked_add(1);
     }
-}
 
-impl<'a, T, const N: usize> GetUnchecked<'a, T> for Vec<T, N> {
-    unsafe fn get_unchecked(&self, index: usize) -> &T {
+    pub unsafe fn get_unchecked(&self, index: usize) -> &T {
         self.data.get_unchecked(index).assume_init_ref()
     }
 
     #[inline(always)]
-    unsafe fn get_unchecked_mut(&mut self, index: usize) -> &mut T {
+    pub unsafe fn get_unchecked_mut(&mut self, index: usize) -> &mut T {
         self.data.get_unchecked_mut(index).assume_init_mut()
     }
-}
 
-impl<'a, T, const N: usize> GetTransmuteUnchecked<'a> for Vec<T, N> {
     #[inline(always)]
-    unsafe fn get_transmute_unchecked<V>(&self, index: Self::Index) -> &V {
+    pub unsafe fn get_transmute_unchecked<V>(&self, index: usize) -> &V {
         let value = self as *const Self as *const T;
         &*value.offset(index as isize).cast::<V>()
     }
 
     #[inline(always)]
-    unsafe fn get_transmute_mut_unchecked<V>(&mut self, index: Self::Index) -> &mut V {
+    pub unsafe fn get_transmute_mut_unchecked<V>(&mut self, index: usize) -> &mut V {
         let value = self as *mut Self as *mut T;
         &mut *value.offset(index as isize).cast::<V>()
     }
-}
 
-impl<'a, T, const N: usize> Get<'a, T> for Vec<T, N> {
-    fn get(&self, index: usize) -> Option<&T> {
+    pub fn get(&self, index: usize) -> Option<&T> {
         if N > index {
             Some(unsafe { self.get_unchecked(index) })
         } else {
@@ -234,17 +212,15 @@ impl<'a, T, const N: usize> Get<'a, T> for Vec<T, N> {
         }
     }
 
-    fn get_mut(&mut self, index: usize) -> Option<&mut T> {
+    pub fn get_mut(&mut self, index: usize) -> Option<&mut T> {
         if N > index {
             Some(unsafe { self.get_unchecked_mut(index) })
         } else {
             None
         }
     }
-}
 
-impl<T, const N: usize> Pop<T> for Vec<T, N> {
-    fn pop(&mut self) -> Option<&T> {
+    pub fn pop(&mut self) -> Option<&T> {
         if self.len == 0 {
             None
         } else {
@@ -252,13 +228,13 @@ impl<T, const N: usize> Pop<T> for Vec<T, N> {
         }
     }
 
-    unsafe fn pop_unchecked(&mut self) -> &T {
+    pub unsafe fn pop_unchecked(&mut self) -> &T {
         let new_len = self.len - 1;
         self.len = new_len;
         self.data.get_unchecked(new_len).assume_init_ref()
     }
 
-    fn pop_mut(&mut self) -> Option<&mut T> {
+    pub fn pop_mut(&mut self) -> Option<&mut T> {
         if self.len == 0 {
             None
         } else {
@@ -266,14 +242,14 @@ impl<T, const N: usize> Pop<T> for Vec<T, N> {
         }
     }
 
-    unsafe fn pop_unchecked_mut(&mut self) -> &mut T {
+    pub unsafe fn pop_unchecked_mut(&mut self) -> &mut T {
         let new_len = self.len - 1;
         self.len = new_len;
         self.data.get_unchecked_mut(new_len).assume_init_mut()
     }
 }
 
-impl<T, const N: usize> SwapRemove for Vec<T, N>
+impl<T, const N: usize> Vec<T, N>
 where
     [(); core::mem::size_of::<T>()]:,
 {
@@ -310,7 +286,7 @@ impl<T: Copy, const N: usize> Clone for Vec<T, N> {
 
 #[cfg(test)]
 mod test {
-    use crate::{Get, Push, SwapRemove, Vec};
+    use crate::Vec;
 
     #[test]
     fn iter() {

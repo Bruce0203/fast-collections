@@ -1,68 +1,44 @@
 use std::{marker::PhantomData, ptr::drop_in_place};
 
-use crate::{AddWithIndex, Clear, Get, GetUnchecked, Index, Pop, Push, RemoveUnchecked, Vec};
+use crate::Vec;
 
 ///Fast and simple storage without any other features like get length, and iteration.
-pub struct Slab<I, T, const N: usize> {
+pub struct Slab<T, const N: usize> {
     chunk: Vec<Option<T>, N>,
     spares: Vec<usize, N>,
-    _marker: PhantomData<I>,
 }
 
-pub auto trait NotCloneAndCopy {}
-impl<T: Clone + Copy> !NotCloneAndCopy for T {}
+impl<T, const N: usize> Slab<T, N> {
+    pub fn new() -> Self {
+        Self {
+            chunk: Vec::uninit(),
+            spares: Vec::uninit(),
+        }
+    }
 
-impl<'a, I, T: 'a, const N: usize> Get<'a, T> for Slab<I, T, N>
-where
-    &'a I: Into<usize> + 'a,
-{
-    fn get(&self, index: Self::Index) -> Option<&T> {
+    fn get(&self, index: usize) -> Option<&T> {
         Some(unsafe { self.get_unchecked(index) })
     }
 
-    fn get_mut(&mut self, index: Self::Index) -> Option<&mut T> {
+    fn get_mut(&mut self, index: usize) -> Option<&mut T> {
         Some(unsafe { self.get_unchecked_mut(index) })
     }
-}
 
-impl<I, T, const N: usize> Default for Slab<I, T, N> {
-    fn default() -> Self {
-        Self {
-            chunk: Default::default(),
-            spares: Default::default(),
-            _marker: PhantomData,
-        }
-    }
-}
-
-impl<'a, I, T, const N: usize> Index<'a> for Slab<I, T, N>
-where
-    &'a I: Into<usize> + 'a,
-{
-    type Index = &'a I;
-}
-
-impl<'a, I, T: 'a, const N: usize> GetUnchecked<'a, T> for Slab<I, T, N>
-where
-    &'a I: Into<usize> + 'a,
-{
     ///After removing an element, be cautious as you might still unintentionally access it using [Self::get_unchecked_mut].
-    unsafe fn get_unchecked_mut(&mut self, index: Self::Index) -> &mut T {
+    unsafe fn get_unchecked_mut(&mut self, index: usize) -> &mut T {
         self.chunk
             .get_unchecked_mut(index.into())
             .as_mut()
             .unwrap_unchecked()
     }
 
-    unsafe fn get_unchecked(&self, index: Self::Index) -> &T {
+    unsafe fn get_unchecked(&self, index: usize) -> &T {
         self.chunk
             .get_unchecked(index.into())
             .as_ref()
             .unwrap_unchecked()
     }
-}
 
-impl<I, T, const N: usize> Clear for Slab<I, T, N> {
     fn clear(&mut self) {
         for ele in self.chunk.iter_mut() {
             if let Some(ele) = ele {
@@ -72,22 +48,12 @@ impl<I, T, const N: usize> Clear for Slab<I, T, N> {
         self.chunk.clear();
         self.spares.clear();
     }
-}
 
-impl<'a, I, T: 'a, const N: usize> RemoveUnchecked<'a> for Slab<I, T, N>
-where
-    &'a I: Into<usize> + 'a,
-{
-    unsafe fn remove_unchecked(&mut self, index: Self::Index) {
+    unsafe fn remove_unchecked(&mut self, index: usize) {
         *self.chunk.get_unchecked_mut(index.into()) = None;
         self.spares.push_unchecked(index.into());
     }
-}
 
-impl<'a, I, T, const N: usize> AddWithIndex<T> for Slab<I, T, N>
-where
-    &'a I: Into<usize> + 'a,
-{
     #[inline(always)]
     fn add_with_index<F>(&mut self, f: F) -> Result<usize, ()>
     where
@@ -110,23 +76,17 @@ where
     }
 }
 
-impl<'a, I, T, const N: usize> Slab<I, T, N>
-where
-    &'a I: Into<usize> + 'a,
-{
-    pub fn new() -> Slab<I, T, N> {
-        Slab {
-            chunk: Vec::uninit(),
-            spares: Vec::uninit(),
-            _marker: PhantomData,
+impl<T, const N: usize> Default for Slab<T, N> {
+    fn default() -> Self {
+        Self {
+            chunk: Default::default(),
+            spares: Default::default(),
         }
     }
 }
 
 #[cfg(test)]
 mod test {
-    use crate::{AddWithIndex, Get, GetUnchecked, NotCloneAndCopy};
-
     use super::Slab;
 
     #[test]
@@ -137,13 +97,12 @@ mod test {
             index: usize,
         }
         struct Id(usize);
-        impl NotCloneAndCopy for Id {}
         impl Into<usize> for &Id {
             fn into(self) -> usize {
                 self.0
             }
         }
-        let mut value = Slab::<Id, A, 100>::new();
+        let mut value = Slab::<A, 100>::new();
         value
             .add_with_index(|index| A {
                 inner: 123,
@@ -157,14 +116,14 @@ mod test {
             })
             .unwrap();
         assert_eq!(
-            unsafe { value.get_unchecked(&Id(0)) },
+            unsafe { value.get_unchecked(0) },
             &A {
                 inner: 123,
                 index: 0
             }
         );
         assert_eq!(
-            unsafe { value.get_unchecked(&Id(1)) },
+            unsafe { value.get_unchecked(1) },
             &A {
                 inner: 456,
                 index: 1
@@ -175,13 +134,12 @@ mod test {
     #[test]
     fn not_clone_copy_test() {
         pub struct Id(usize);
-        impl NotCloneAndCopy for Id {}
         impl Into<usize> for &Id {
             fn into(self) -> usize {
                 self.0
             }
         }
-        let slab: Slab<Id, bool, 100> = Slab::new();
-        let value = slab.get(&Id(0));
+        let slab: Slab<bool, 100> = Slab::new();
+        let value = slab.get(0);
     }
 }
