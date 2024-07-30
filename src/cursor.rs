@@ -240,6 +240,13 @@ impl<const N: usize> Cursor<u8, N> {
     pub fn push_from_read<R: std::io::Read>(&mut self, read: &mut R) -> std::io::Result<()> {
         let unfilled = unsafe { self.unfilled_mut() };
         let read_length = read.read(unfilled)?;
+        if read_length == 0 {
+            use std::io::{Error, ErrorKind};
+            Err(Error::new(
+                ErrorKind::ConnectionAborted,
+                "read length was 0",
+            ))?;
+        }
         unsafe { *self.filled_len_mut() += read_length };
         Ok(())
     }
