@@ -321,9 +321,9 @@ mod test {
             buffer.push(i).unwrap();
         }
         unsafe { *buffer.filled_len_mut() = 4 };
-        assert_eq!(unsafe { buffer.filled() }, &[1, 2, 3, 4]);
+        assert_eq!(buffer.filled(), &[1, 2, 3, 4]);
         assert_eq!(unsafe { buffer.filled_mut() }, &[1, 2, 3, 4]);
-        assert_eq!(unsafe { buffer.unfilled() }, &[5, 6, 7, 8]);
+        assert_eq!(buffer.unfilled(), &[5, 6, 7, 8]);
         assert_eq!(unsafe { buffer.unfilled_mut() }, &[5, 6, 7, 8]);
         unsafe { *buffer.pos_mut() = 2 }
         assert_eq!(buffer.read().unwrap(), &3);
@@ -335,7 +335,7 @@ mod test {
     #[test]
     fn test_cursor_push() {
         let mut cursor: Cursor<u8, 100> = Cursor::new();
-        let value: [u8; 2] = unsafe { const_transmute_unchecked(100u16) };
+        let _value: [u8; 2] = unsafe { const_transmute_unchecked(100u16) };
         cursor.push_transmute(260u16).unwrap();
         assert_eq!(cursor.filled_len(), 2);
         assert_eq!(cursor.read_transmute::<u16>().unwrap(), &260u16);

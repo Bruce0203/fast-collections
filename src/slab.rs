@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, ptr::drop_in_place};
+use std::ptr::drop_in_place;
 
 use crate::Vec;
 
@@ -16,30 +16,30 @@ impl<T, const N: usize> Slab<T, N> {
         }
     }
 
-    fn get(&self, index: usize) -> Option<&T> {
-        Some(unsafe { self.get_unchecked(index) })
+    pub fn get(&self, index: usize) -> Option<&T> {
+        unsafe { self.chunk.get_unchecked(index).as_ref() }
     }
 
-    fn get_mut(&mut self, index: usize) -> Option<&mut T> {
-        Some(unsafe { self.get_unchecked_mut(index) })
+    pub fn get_mut(&mut self, index: usize) -> Option<&mut T> {
+        unsafe { self.chunk.get_unchecked_mut(index).as_mut() }
     }
 
     ///After removing an element, be cautious as you might still unintentionally access it using [Self::get_unchecked_mut].
-    unsafe fn get_unchecked_mut(&mut self, index: usize) -> &mut T {
+    pub unsafe fn get_unchecked_mut(&mut self, index: usize) -> &mut T {
         self.chunk
             .get_unchecked_mut(index.into())
             .as_mut()
             .unwrap_unchecked()
     }
 
-    unsafe fn get_unchecked(&self, index: usize) -> &T {
+    pub unsafe fn get_unchecked(&self, index: usize) -> &T {
         self.chunk
             .get_unchecked(index.into())
             .as_ref()
             .unwrap_unchecked()
     }
 
-    fn clear(&mut self) {
+    pub fn clear(&mut self) {
         for ele in self.chunk.iter_mut() {
             if let Some(ele) = ele {
                 unsafe { drop_in_place(ele as *mut T) }
@@ -49,13 +49,13 @@ impl<T, const N: usize> Slab<T, N> {
         self.spares.clear();
     }
 
-    unsafe fn remove_unchecked(&mut self, index: usize) {
+    pub unsafe fn remove_unchecked(&mut self, index: usize) {
         *self.chunk.get_unchecked_mut(index.into()) = None;
         self.spares.push_unchecked(index.into());
     }
 
     #[inline(always)]
-    fn add_with_index<F>(&mut self, f: F) -> Result<usize, ()>
+    pub fn add_with_index<F>(&mut self, f: F) -> Result<usize, ()>
     where
         F: FnOnce(&usize) -> T,
     {
@@ -129,17 +129,5 @@ mod test {
                 index: 1
             }
         );
-    }
-
-    #[test]
-    fn not_clone_copy_test() {
-        pub struct Id(usize);
-        impl Into<usize> for &Id {
-            fn into(self) -> usize {
-                self.0
-            }
-        }
-        let slab: Slab<bool, 100> = Slab::new();
-        let value = slab.get(0);
     }
 }

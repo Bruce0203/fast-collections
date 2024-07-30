@@ -1,9 +1,6 @@
-#![feature(negative_impls)]
-#![feature(auto_traits)]
-#![feature(const_refs_to_cell)]
 #![feature(const_mut_refs)]
+#![allow(incomplete_features)]
 #![feature(generic_const_exprs)]
-#![feature(generic_arg_infer)]
 
 pub mod cursor;
 pub mod slab;

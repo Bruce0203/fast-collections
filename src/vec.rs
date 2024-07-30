@@ -155,7 +155,7 @@ impl<T, const N: usize> Vec<T, N> {
         }
     }
 
-    const fn is_empty(&self) -> bool {
+    pub const fn is_empty(&self) -> bool {
         self.len == 0
     }
 
@@ -253,7 +253,7 @@ impl<T, const N: usize> Vec<T, N>
 where
     [(); core::mem::size_of::<T>()]:,
 {
-    fn swap_remove(&mut self, index: usize) -> Result<(), ()> {
+    pub fn swap_remove(&mut self, index: usize) -> Result<(), ()> {
         if index < N {
             unsafe { self.swap_remove_unchecked(index) };
             Ok(())
@@ -262,7 +262,7 @@ where
         }
     }
 
-    unsafe fn swap_remove_unchecked(&mut self, index: usize) {
+    pub unsafe fn swap_remove_unchecked(&mut self, index: usize) {
         let new_len = self.len - 1;
         *self.len_mut() = new_len;
         let last_ele = self.get_unchecked_mut(new_len);

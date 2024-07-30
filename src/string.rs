@@ -1,4 +1,4 @@
-use std::fmt::{Debug, Display, Error};
+use std::fmt::{Debug, Display};
 
 use crate::{const_transmute_unchecked, min, Vec};
 
@@ -74,7 +74,7 @@ mod test {
         let value: String<10> = String::from_array(*b"hell0");
         println!("{:?}", value.vec.as_slice());
         assert_eq!(value.vec.as_slice(), *b"hell0     ");
-        fn asdf(value: String<5>) {}
+        fn asdf(_value: String<5>) {}
         asdf(String::from_array(*b"a"));
         println!("{:?}", value);
     }
