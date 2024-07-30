@@ -8,13 +8,11 @@
 pub mod cursor;
 pub mod slab;
 pub mod string;
-pub mod traits;
 pub mod vec;
 
 pub use cursor::*;
 pub use slab::*;
 pub use string::*;
-pub use traits::*;
 pub use vec::*;
 
 /// A const reimplementation of the [`transmute`](core::mem::transmute) function, avoiding copying
