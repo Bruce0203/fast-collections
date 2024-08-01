@@ -1,4 +1,4 @@
-use core::mem::MaybeUninit;
+use core::{alloc, mem::MaybeUninit};
 use std::fmt::Debug;
 
 use crate::{const_transmute_unchecked, min};
@@ -250,21 +250,23 @@ impl<T, const N: usize> Vec<T, N> {
 }
 
 impl<T, const N: usize> Vec<T, N> {
-    pub fn swap_remove(&mut self, index: usize) -> Result<(), ()> {
+    pub fn swap_remove(&mut self, index: usize) -> Result<T, ()> {
         if index < N {
-            unsafe { self.swap_remove_unchecked(index) };
-            Ok(())
+            Ok(unsafe { self.swap_remove_unchecked(index) })
         } else {
             Err(())
         }
     }
 
-    pub unsafe fn swap_remove_unchecked(&mut self, index: usize) {
+    pub unsafe fn swap_remove_unchecked(&mut self, index: usize) -> T {
         let new_len = self.len - 1;
         *self.len_mut() = new_len;
         let last_ele = self.get_unchecked_mut(new_len);
         let last_ele = core::ptr::read(last_ele);
-        *self.get_unchecked_mut(index) = last_ele;
+        let remove = self.get_unchecked_mut(index);
+        let removed = core::ptr::read(remove);
+        *remove = last_ele;
+        removed
     }
 }
 
