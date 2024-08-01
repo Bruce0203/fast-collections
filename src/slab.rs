@@ -130,4 +130,21 @@ mod test {
             }
         );
     }
+
+    #[test]
+    fn drop_test() {
+        struct Token(usize);
+        let mut slab: Slab<Token, 10> = Slab::new();
+        static mut value: bool = false;
+        impl Drop for Token {
+            fn drop(&mut self) {
+                self.0 = 123;
+                unsafe { value = true };
+                println!("HI");
+            }
+        }
+        slab.add_with_index(|i| Token(1)).unwrap();
+        unsafe { slab.remove_unchecked(0) };
+        assert_eq!(unsafe { value }, true)
+    }
 }

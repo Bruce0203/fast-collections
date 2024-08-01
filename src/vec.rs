@@ -249,10 +249,7 @@ impl<T, const N: usize> Vec<T, N> {
     }
 }
 
-impl<T, const N: usize> Vec<T, N>
-where
-    [(); core::mem::size_of::<T>()]:,
-{
+impl<T, const N: usize> Vec<T, N> {
     pub fn swap_remove(&mut self, index: usize) -> Result<(), ()> {
         if index < N {
             unsafe { self.swap_remove_unchecked(index) };
@@ -266,9 +263,7 @@ where
         let new_len = self.len - 1;
         *self.len_mut() = new_len;
         let last_ele = self.get_unchecked_mut(new_len);
-        let last_ele: &[u8; core::mem::size_of::<T>()] = const_transmute_unchecked(last_ele);
-        let last_ele = *last_ele;
-        let last_ele: T = const_transmute_unchecked(last_ele);
+        let last_ele = core::ptr::read(last_ele);
         *self.get_unchecked_mut(index) = last_ele;
     }
 }
