@@ -261,11 +261,10 @@ impl<T, const N: usize> Vec<T, N> {
     pub unsafe fn swap_remove_unchecked(&mut self, index: usize) -> T {
         let new_len = self.len - 1;
         *self.len_mut() = new_len;
-        let last_ele = self.get_unchecked_mut(new_len);
-        let last_ele = core::ptr::read(last_ele);
+        let last_ele = self.get_unchecked_mut(new_len) as *const T;
         let remove = self.get_unchecked_mut(index);
         let removed = core::ptr::read(remove);
-        *remove = last_ele;
+        core::ptr::copy(last_ele, remove, size_of::<T>());
         removed
     }
 }
