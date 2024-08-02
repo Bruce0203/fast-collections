@@ -4,7 +4,7 @@ use crate::Vec;
 
 ///Fast and simple storage without any other features like get length, and iteration.
 pub struct Slab<T, const N: usize> {
-    chunk: Vec<Option<T>, N>,
+    chunk: Vec<T, N>,
     spares: Vec<usize, N>,
 }
 
@@ -16,41 +16,25 @@ impl<T, const N: usize> Slab<T, N> {
         }
     }
 
-    pub fn get(&self, index: usize) -> Option<&T> {
-        unsafe { self.chunk.get_unchecked(index).as_ref() }
-    }
-
-    pub fn get_mut(&mut self, index: usize) -> Option<&mut T> {
-        unsafe { self.chunk.get_unchecked_mut(index).as_mut() }
-    }
-
     ///After removing an element, be cautious as you might still unintentionally access it using [Self::get_unchecked_mut].
     pub unsafe fn get_unchecked_mut(&mut self, index: usize) -> &mut T {
-        self.chunk
-            .get_unchecked_mut(index.into())
-            .as_mut()
-            .unwrap_unchecked()
+        self.chunk.get_unchecked_mut(index.into())
     }
 
     pub unsafe fn get_unchecked(&self, index: usize) -> &T {
-        self.chunk
-            .get_unchecked(index.into())
-            .as_ref()
-            .unwrap_unchecked()
+        self.chunk.get_unchecked(index.into())
     }
 
     pub fn clear(&mut self) {
         for ele in self.chunk.iter_mut() {
-            if let Some(ele) = ele {
-                unsafe { drop_in_place(ele as *mut T) }
-            }
+            unsafe { drop_in_place(ele as *mut T) }
         }
         self.chunk.clear();
         self.spares.clear();
     }
 
     pub unsafe fn remove_unchecked(&mut self, index: usize) {
-        *self.chunk.get_unchecked_mut(index.into()) = None;
+        core::ptr::drop_in_place(self.chunk.get_unchecked_mut(index.into()));
         self.spares.push_unchecked(index.into());
     }
 
@@ -65,12 +49,12 @@ impl<T, const N: usize> Slab<T, N> {
                 return Err(());
             }
             let elem = f(&index);
-            unsafe { self.chunk.push_unchecked(Some(elem)) };
+            unsafe { self.chunk.push_unchecked(elem) };
             Ok(index)
         } else {
             let index = unsafe { self.spares.pop_unchecked() };
             let elem = f(index);
-            *unsafe { self.chunk.get_unchecked_mut(*index) } = Some(elem);
+            *unsafe { self.chunk.get_unchecked_mut(*index) } = elem;
             Ok(*index)
         }
     }
