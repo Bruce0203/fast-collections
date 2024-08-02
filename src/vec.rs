@@ -250,22 +250,21 @@ impl<T, const N: usize> Vec<T, N> {
 }
 
 impl<T, const N: usize> Vec<T, N> {
-    pub fn swap_remove(&mut self, index: usize) -> Result<T, ()> {
+    pub fn swap_remove(&mut self, index: usize) -> Result<(), ()> {
         if index < N {
-            Ok(unsafe { self.swap_remove_unchecked(index) })
+            unsafe { self.swap_remove_unchecked(index) };
+            Ok(())
         } else {
             Err(())
         }
     }
 
-    pub unsafe fn swap_remove_unchecked(&mut self, index: usize) -> T {
+    pub unsafe fn swap_remove_unchecked(&mut self, index: usize) {
         let new_len = self.len - 1;
         *self.len_mut() = new_len;
         let last_ele = self.get_unchecked_mut(new_len) as *const T;
         let remove = self.get_unchecked_mut(index);
-        let removed = core::ptr::read(remove);
-        core::ptr::copy(last_ele, remove, size_of::<T>());
-        removed
+        core::ptr::copy(last_ele, remove, 1);
     }
 }
 
@@ -347,6 +346,12 @@ mod test {
             vec.push(1).unwrap();
             vec.swap_remove(0).unwrap();
             assert_eq!(vec.len(), 0);
+        }
+        {
+            let mut vec = Vec::<u8, 10>::uninit();
+            vec.push(1).unwrap();
+            vec.push(2).unwrap();
+            let removed = vec.swap_remove(0).unwrap();
         }
     }
 }
