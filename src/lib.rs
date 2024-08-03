@@ -7,7 +7,9 @@ pub mod cursor;
 pub mod slab;
 pub mod string;
 pub mod vec;
+pub mod iterable_slab;
 
+pub use iterable_slab::*;
 pub use cursor::*;
 pub use slab::*;
 pub use string::*;
