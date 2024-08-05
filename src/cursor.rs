@@ -5,7 +5,6 @@ use core::{
 
 use crate::const_transmute_unchecked;
 
-#[repr(C)]
 pub struct Cursor<T, const N: usize> {
     buffer: [MaybeUninit<T>; N],
     pos: usize,
@@ -52,7 +51,7 @@ impl<T, const N: usize> Cursor<T, N> {
 
     #[inline(always)]
     pub const fn as_array(&mut self) -> &mut [T; N] {
-        unsafe { const_transmute_unchecked(self) }
+        unsafe { const_transmute_unchecked(&mut self.buffer) }
     }
 
     #[inline(always)]
@@ -166,13 +165,13 @@ impl<T, const N: usize> Cursor<T, N> {
 
     #[inline(always)]
     pub unsafe fn get_transmute_unchecked<V>(&self, index: usize) -> &V {
-        let value = self as *const Self as *const u8;
+        let value = (&self.buffer) as *const _ as *const u8;
         &*value.offset(index as isize).cast::<V>()
     }
 
     #[inline(always)]
     pub unsafe fn get_transmute_mut_unchecked<V>(&mut self, index: usize) -> &mut V {
-        let value = self as *mut Self as *mut u8;
+        let value = (&mut self.buffer) as *mut _ as *mut u8;
         &mut *value.offset(index as isize).cast::<V>()
     }
 
@@ -186,7 +185,7 @@ impl<T, const N: usize> Cursor<T, N> {
 
     pub unsafe fn push_transmute_unchecked<V>(&mut self, value: V) {
         const { assert_types::<T, V>() };
-        let ptr = self as *mut Self as *mut u8;
+        let ptr = (&mut self.buffer) as *mut _ as *mut u8;
         *ptr.offset(self.filled_len as isize).cast::<V>() = value;
         *self.filled_len_mut() = self
             .filled_len
@@ -204,7 +203,7 @@ impl<T, const N: usize> Cursor<T, N> {
 
     #[inline(always)]
     pub unsafe fn read_transmute_unchecked<V>(&mut self) -> &V {
-        let value = self as *const Self as *const u8;
+        let value = (&mut self.buffer) as *const _ as *const u8;
         let result = &*value.offset(self.pos as isize).cast::<V>();
         *self.pos_mut() = self.pos.unchecked_add(core::mem::size_of::<V>());
         result
@@ -230,7 +229,7 @@ impl<T, const N: usize> Cursor<T, N> {
 
     pub unsafe fn set_transmute_unchecked<V>(&mut self, index: usize, value: V) {
         const { assert_types::<T, V>() };
-        let ptr = self as *mut Self as *mut u8;
+        let ptr = (&mut self.buffer) as *mut _ as *mut u8;
         *ptr.offset(index as isize).cast::<V>() = value;
     }
 }
