@@ -234,9 +234,27 @@ impl<T, const N: usize> Cursor<T, N> {
     }
 }
 
+#[cfg(feature = "std")]
+impl<const N: usize> std::io::Read for Cursor<u8, N> {
+    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
+        self.filled().read(buf)
+    }
+}
+
+#[cfg(feature = "std")]
+impl<const N: usize> std::io::Write for Cursor<u8, N> {
+    fn write(&mut self, mut buf: &[u8]) -> std::io::Result<usize> {
+        self.push_from_read(&mut buf)
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
+#[cfg(feature = "std")]
 impl<const N: usize> Cursor<u8, N> {
-    #[cfg(feature = "std")]
-    pub fn push_from_read<R: std::io::Read>(&mut self, read: &mut R) -> std::io::Result<()> {
+    pub fn push_from_read<R: std::io::Read>(&mut self, read: &mut R) -> std::io::Result<usize> {
         let unfilled = unsafe { self.unfilled_mut() };
         let read_length = read.read(unfilled)?;
         if read_length == 0 {
@@ -247,14 +265,13 @@ impl<const N: usize> Cursor<u8, N> {
             ))?;
         }
         unsafe { *self.filled_len_mut() += read_length };
-        Ok(())
+        Ok(read_length)
     }
 
-    #[cfg(feature = "std")]
-    pub fn push_to_write<W: std::io::Write>(&mut self, write: &mut W) -> std::io::Result<()> {
-        write.write_all(self.filled())?;
+    pub fn push_to_write<W: std::io::Write>(&mut self, write: &mut W) -> std::io::Result<usize> {
+        let write_len = write.write(self.filled())?;
         self.clear();
-        Ok(())
+        Ok(write_len)
     }
 }
 
