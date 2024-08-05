@@ -3,7 +3,6 @@ use std::fmt::Debug;
 
 use crate::{const_transmute_unchecked, min};
 
-#[repr(C)]
 pub struct Vec<T, const N: usize> {
     data: [MaybeUninit<T>; N],
     len: usize,
@@ -194,13 +193,13 @@ impl<T, const N: usize> Vec<T, N> {
 
     #[inline(always)]
     pub unsafe fn get_transmute_unchecked<V>(&self, index: usize) -> &V {
-        let value = self as *const Self as *const T;
+        let value = (&self.data) as *const _ as *const T;
         &*value.offset(index as isize).cast::<V>()
     }
 
     #[inline(always)]
     pub unsafe fn get_transmute_mut_unchecked<V>(&mut self, index: usize) -> &mut V {
-        let value = self as *mut Self as *mut T;
+        let value = (&mut self.data) as *mut _ as *mut T;
         &mut *value.offset(index as isize).cast::<V>()
     }
 
